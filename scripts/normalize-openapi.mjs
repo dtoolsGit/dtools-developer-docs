@@ -90,10 +90,12 @@ for (const item of Object.values(spec.paths || {})) {
   }
 }
 
-// 2b) Surface x-dtools-* metadata as a rendered badge line in each operation description.
-// Mintlify (and most renderers) do not render arbitrary `x-` extensions, so we fold the
-// load-bearing ones into the description where they always render. Idempotent via a sentinel.
-const META_SENTINEL = "<!-- x-dtools-meta -->";
+// 2b) Surface x-dtools-* metadata as a rendered badge line at the top of each operation
+// description. Mintlify (and most renderers) do not render arbitrary `x-` extensions, so we fold
+// the load-bearing ones into the description, where they render as Markdown.
+// NOTE: do NOT use an HTML comment (`<!-- -->`) as a marker here — Mintlify renders descriptions
+// as MDX, where HTML comments are invalid: they print literally AND break the surrounding
+// Markdown parse. Idempotency is detected from our own distinctive bold labels instead.
 function bool(v) {
   return v === true ? "yes" : v === false ? "no" : null;
 }
@@ -107,13 +109,16 @@ function buildMetaLine(op) {
   if (bool(op["x-dtools-idempotent"]) !== null) parts.push(`**Idempotent:** ${bool(op["x-dtools-idempotent"])}`);
   if (bool(op["x-dtools-async-job"]) !== null) parts.push(`**Async job:** ${bool(op["x-dtools-async-job"])}`);
   if (op["x-dtools-workload-class"]) parts.push(`**Workload:** \`${op["x-dtools-workload-class"]}\``);
-  return parts.length ? `${META_SENTINEL}\n\n${parts.join(" · ")}` : null;
+  return parts.length ? parts.join(" · ") : null;
 }
+// Idempotency: skip if our badge line is already present (detected by distinctive labels),
+// so re-normalizing an already-normalized spec is a no-op without any visible marker.
+const hasMeta = (d) => typeof d === "string" && /\*\*(Release-gated|Idempotent|Workload):\*\*/.test(d);
 let metaCount = 0;
 for (const item of Object.values(spec.paths || {})) {
   for (const op of Object.values(item)) {
     if (!op || typeof op !== "object" || !("operationId" in op)) continue;
-    if (typeof op.description === "string" && op.description.includes(META_SENTINEL)) continue;
+    if (hasMeta(op.description)) continue;
     const line = buildMetaLine(op);
     if (!line) continue;
     op.description = op.description ? `${line}\n\n${op.description}` : line;

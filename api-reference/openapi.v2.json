@@ -22,7 +22,7 @@
           "CRM"
         ],
         "summary": "List contacts with optional filtering, search, sorting, and pagination.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `contacts` · **Policy:** `Clients:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns tenant-scoped contacts through the existing catalog contact manager. companies, titles, active, search, sort, and paging mirror the legacy contact-list behavior.",
+        "description": "**Capability:** `contacts` · **Policy:** `Clients:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns tenant-scoped contacts through the existing catalog contact manager. companies, titles, active, search, sort, and paging mirror the legacy contact-list behavior.",
         "operationId": "v2.crm.contacts.list",
         "parameters": [
           {
@@ -270,7 +270,7 @@
           "CRM"
         ],
         "summary": "Get a single contact by internal ID.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `contacts` · **Policy:** `Clients:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nThe contact id is the integer contact id used by the backing catalog service. The lookup is scoped by the PlatformContext-derived legacy session.",
+        "description": "**Capability:** `contacts` · **Policy:** `Clients:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nThe contact id is the integer contact id used by the backing catalog service. The lookup is scoped by the PlatformContext-derived legacy session.",
         "operationId": "v2.crm.contacts.get",
         "parameters": [
           {
@@ -498,7 +498,7 @@
           "Catalog"
         ],
         "summary": "Execute a product AI chat task.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `catalog` · **Policy:** `Catalog:AiTask` · **Access depth:** `WorkflowTask` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** yes · **Workload:** `AiTaskExecution`\n\nCreates a platform job, runs the AI chat via ProductAIChatManager, records usage.\n\nResolves the public product Guid to the tenant-scoped item id, creates a platform job, executes the product AI chat workflow, records AI usage, and returns a TaskResult.",
+        "description": "**Capability:** `catalog` · **Policy:** `Catalog:AiTask` · **Access depth:** `WorkflowTask` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** yes · **Workload:** `AiTaskExecution`\n\nCreates a platform job, runs the AI chat via ProductAIChatManager, records usage.\n\nResolves the public product Guid to the tenant-scoped item id, creates a platform job, executes the product AI chat workflow, records AI usage, and returns a TaskResult.",
         "operationId": "v2.catalog.tasks.product-ai-chat.create",
         "parameters": [
           {
@@ -789,7 +789,7 @@
           "CRM"
         ],
         "summary": "List clients with optional filtering, search, sorting, and pagination.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `clients` · **Policy:** `Clients:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns clients visible to the caller's tenant through the legacy CloudApi client service. Optional type, owner, search, sort, and paging parameters follow the existing client-list contract.",
+        "description": "**Capability:** `clients` · **Policy:** `Clients:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns clients visible to the caller's tenant through the legacy CloudApi client service. Optional type, owner, search, sort, and paging parameters follow the existing client-list contract.",
         "operationId": "v2.crm.clients.list",
         "parameters": [
           {
@@ -1028,7 +1028,7 @@
           "CRM"
         ],
         "summary": "Create a new client.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `clients` · **Policy:** `Clients:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nPersists a client using the existing CloudApi client payload shape. The tenant is taken from PlatformContext, not from the request body.",
+        "description": "**Capability:** `clients` · **Policy:** `Clients:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nPersists a client using the existing CloudApi client payload shape. The tenant is taken from PlatformContext, not from the request body.",
         "operationId": "v2.crm.clients.create",
         "parameters": [
           {
@@ -1279,7 +1279,7 @@
           "CRM"
         ],
         "summary": "Get a single client by ID.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `clients` · **Policy:** `Clients:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nThe route id is the public client Guid. The legacy service resolves the record within the caller's tenant.",
+        "description": "**Capability:** `clients` · **Policy:** `Clients:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nThe route id is the public client Guid. The legacy service resolves the record within the caller's tenant.",
         "operationId": "v2.crm.clients.get",
         "parameters": [
           {
@@ -1534,7 +1534,7 @@
           "CRM"
         ],
         "summary": "Update an existing client.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `clients` · **Policy:** `Clients:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nUpdates the client identified by the public Guid in the route. The request body uses the legacy client shape and is saved within the caller's tenant context.",
+        "description": "**Capability:** `clients` · **Policy:** `Clients:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nUpdates the client identified by the public Guid in the route. The request body uses the legacy client shape and is saved within the caller's tenant context.",
         "operationId": "v2.crm.clients.update",
         "parameters": [
           {
@@ -1793,7 +1793,7 @@
           "Files"
         ],
         "summary": "Get file detail and signed URL by file id.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `files` · **Policy:** `Files:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nResolves file metadata for the caller's tenant and returns the legacy file detail shape, including the service-provided access URL when available.",
+        "description": "**Capability:** `files` · **Policy:** `Files:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nResolves file metadata for the caller's tenant and returns the legacy file detail shape, including the service-provided access URL when available.",
         "operationId": "v2.files.get",
         "parameters": [
           {
@@ -2020,7 +2020,7 @@
           "Files"
         ],
         "summary": "List files by entity (client, opportunity, project, quote).",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `files` · **Policy:** `Files:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nLists files attached to a tenant-scoped entity. entityId must be a Guid and entityType must match an entity category supported by the backing file repository.",
+        "description": "**Capability:** `files` · **Policy:** `Files:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nLists files attached to a tenant-scoped entity. entityId must be a Guid and entityType must match an entity category supported by the backing file repository.",
         "operationId": "v2.files.list",
         "parameters": [
           {
@@ -2289,7 +2289,7 @@
           "Opportunities"
         ],
         "summary": "List opportunities with optional filtering, search, sorting, and pagination.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `opportunities` · **Policy:** `Opportunities:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns tenant-scoped opportunities through the legacy opportunity service. Optional type, stage, search, sort, and paging values follow the existing opportunity-list contract.",
+        "description": "**Capability:** `opportunities` · **Policy:** `Opportunities:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns tenant-scoped opportunities through the legacy opportunity service. Optional type, stage, search, sort, and paging values follow the existing opportunity-list contract.",
         "operationId": "v2.opportunities.list",
         "parameters": [
           {
@@ -2530,7 +2530,7 @@
           "Opportunities"
         ],
         "summary": "Get a single opportunity by ID.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `opportunities` · **Policy:** `Opportunities:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nThe route id is the public opportunity Guid. The response is scoped to the caller's tenant and uses the existing opportunity detail shape.",
+        "description": "**Capability:** `opportunities` · **Policy:** `Opportunities:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nThe route id is the public opportunity Guid. The response is scoped to the caller's tenant and uses the existing opportunity detail shape.",
         "operationId": "v2.opportunities.get",
         "parameters": [
           {
@@ -2787,7 +2787,7 @@
           "Opportunities"
         ],
         "summary": "Get assembled opportunity context (opportunity + client + quotes + files).",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `opportunities` · **Policy:** `Opportunities:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns workflow context for a tenant-scoped opportunity so clients and agents can work from one composed payload instead of calling opportunity, client, quote, and file endpoints separately.",
+        "description": "**Capability:** `opportunities` · **Policy:** `Opportunities:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns workflow context for a tenant-scoped opportunity so clients and agents can work from one composed payload instead of calling opportunity, client, quote, and file endpoints separately.",
         "operationId": "v2.opportunities.context.get",
         "parameters": [
           {
@@ -3044,7 +3044,7 @@
           "Opportunities"
         ],
         "summary": "Initiate AI-driven scope-of-work draft generation for a quote linked to this opportunity.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `opportunities` · **Policy:** `Opportunities:AiTask` · **Access depth:** `WorkflowTask` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** yes · **Workload:** `AiTaskExecution`\n\nThis is the Day 30 gate deliverable — full v2 pipeline:\n[Authorize] → PlatformContext from JWT → composite policy → task → AiAssistManager → job → usage ledger → audit.\n\nCreates a platform job, runs AI scope generation, records AI workload usage, and returns a TaskResult. The quote id in the body must belong to the opportunity context available to the caller.",
+        "description": "**Capability:** `opportunities` · **Policy:** `Opportunities:AiTask` · **Access depth:** `WorkflowTask` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** yes · **Workload:** `AiTaskExecution`\n\nThis is the Day 30 gate deliverable — full v2 pipeline:\n[Authorize] → PlatformContext from JWT → composite policy → task → AiAssistManager → job → usage ledger → audit.\n\nCreates a platform job, runs AI scope generation, records AI workload usage, and returns a TaskResult. The quote id in the body must belong to the opportunity context available to the caller.",
         "operationId": "v2.opportunities.tasks.draft-scope-of-work.create",
         "parameters": [
           {
@@ -3312,7 +3312,7 @@
           "Opportunities"
         ],
         "summary": "Create a follow-up work item linked to this opportunity.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `opportunities` · **Policy:** `Opportunities:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nCreates a work item whose related entity is forced to the opportunity route id. Any entity values supplied in the body are overwritten by the endpoint.",
+        "description": "**Capability:** `opportunities` · **Policy:** `Opportunities:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nCreates a work item whose related entity is forced to the opportunity route id. Any entity values supplied in the body are overwritten by the endpoint.",
         "operationId": "v2.opportunities.tasks.work-items.create",
         "parameters": [
           {
@@ -3571,7 +3571,7 @@
           "Catalog"
         ],
         "summary": "Search catalog products with optional query, pagination.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `catalog` · **Policy:** `Catalog:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns tenant-scoped catalog products through the legacy product service. query is optional; page and pageSize use the existing CloudApi product-search semantics.",
+        "description": "**Capability:** `catalog` · **Policy:** `Catalog:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns tenant-scoped catalog products through the legacy product service. query is optional; page and pageSize use the existing CloudApi product-search semantics.",
         "operationId": "v2.catalog.products.search",
         "parameters": [
           {
@@ -3785,7 +3785,7 @@
           "Catalog"
         ],
         "summary": "Get a single catalog item by ID.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `catalog` · **Policy:** `Catalog:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nThe route id is the public product/item Guid. The endpoint resolves the item through the caller's legacy session and returns the legacy product detail shape.",
+        "description": "**Capability:** `catalog` · **Policy:** `Catalog:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nThe route id is the public product/item Guid. The endpoint resolves the item through the caller's legacy session and returns the legacy product detail shape.",
         "operationId": "v2.catalog.items.get",
         "parameters": [
           {
@@ -4042,7 +4042,7 @@
           "Catalog"
         ],
         "summary": "Update catalog product fields — requires schema additions (Phase 2).",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `catalog` · **Policy:** `Catalog:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nReserved write endpoint. It currently returns a structured 501 error until the update request schema is finalized.",
+        "description": "**Capability:** `catalog` · **Policy:** `Catalog:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nReserved write endpoint. It currently returns a structured 501 error until the update request schema is finalized.",
         "operationId": "v2.catalog.products.update",
         "parameters": [
           {
@@ -4254,7 +4254,7 @@
           "Projects"
         ],
         "summary": "List projects with optional search, sorting, and pagination.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `projects` · **Policy:** `Projects:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns tenant-scoped project records through the legacy project service. search, sort, page, and pageSize follow the existing CloudApi project-list behavior.",
+        "description": "**Capability:** `projects` · **Policy:** `Projects:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns tenant-scoped project records through the legacy project service. search, sort, page, and pageSize follow the existing CloudApi project-list behavior.",
         "operationId": "v2.projects.list",
         "parameters": [
           {
@@ -4475,7 +4475,7 @@
           "Projects"
         ],
         "summary": "Get a single project by ID.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `projects` · **Policy:** `Projects:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nThe route id is the public project Guid. The endpoint converts PlatformContext to the legacy session before reading tenant-scoped project detail.",
+        "description": "**Capability:** `projects` · **Policy:** `Projects:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nThe route id is the public project Guid. The endpoint converts PlatformContext to the legacy session before reading tenant-scoped project detail.",
         "operationId": "v2.projects.get",
         "parameters": [
           {
@@ -4732,7 +4732,7 @@
           "Projects"
         ],
         "summary": "Get items for a project.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `projects` · **Policy:** `Projects:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nResolves the public project Guid to the tenant-scoped internal project id before returning project items through the project item manager.",
+        "description": "**Capability:** `projects` · **Policy:** `Projects:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nResolves the public project Guid to the tenant-scoped internal project id before returning project items through the project item manager.",
         "operationId": "v2.projects.items.list",
         "parameters": [
           {
@@ -5222,7 +5222,7 @@
           "Quotes"
         ],
         "summary": "List quotes for an opportunity.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `quotes` · **Policy:** `Quotes:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nLists quotes attached to the opportunity Guid supplied in the query string. The opportunity and quote data are read through the caller's tenant-scoped PlatformContext.",
+        "description": "**Capability:** `quotes` · **Policy:** `Quotes:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nLists quotes attached to the opportunity Guid supplied in the query string. The opportunity and quote data are read through the caller's tenant-scoped PlatformContext.",
         "operationId": "v2.quotes.list",
         "parameters": [
           {
@@ -5446,7 +5446,7 @@
           "Quotes"
         ],
         "summary": "Create a new quote for an opportunity.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `quotes` · **Policy:** `Quotes:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nCreates a quote under the opportunity Guid supplied in the query string. The new quote id is returned as a public Guid.",
+        "description": "**Capability:** `quotes` · **Policy:** `Quotes:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nCreates a quote under the opportunity Guid supplied in the query string. The new quote id is returned as a public Guid.",
         "operationId": "v2.quotes.create",
         "parameters": [
           {
@@ -5680,7 +5680,7 @@
           "Quotes"
         ],
         "summary": "Get a single quote by ID with full detail.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `quotes` · **Policy:** `Quotes:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nThe route id is the public quote Guid. The detail payload is returned from the existing quote workflow facade within the caller's tenant.",
+        "description": "**Capability:** `quotes` · **Policy:** `Quotes:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nThe route id is the public quote Guid. The detail payload is returned from the existing quote workflow facade within the caller's tenant.",
         "operationId": "v2.quotes.get",
         "parameters": [
           {
@@ -5935,7 +5935,7 @@
           "Quotes"
         ],
         "summary": "Soft-delete a quote.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `quotes` · **Policy:** `Quotes:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `BoundedWrite`\n\nMarks the quote as deleted using the backing quote workflow. The quote can be restored through the restore operation when supported by the workflow.",
+        "description": "**Capability:** `quotes` · **Policy:** `Quotes:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `BoundedWrite`\n\nMarks the quote as deleted using the backing quote workflow. The quote can be restored through the restore operation when supported by the workflow.",
         "operationId": "v2.quotes.delete",
         "parameters": [
           {
@@ -6162,7 +6162,7 @@
           "Quotes"
         ],
         "summary": "Get the scope-of-work HTML for a quote.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `quotes` · **Policy:** `Quotes:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns the saved scope-of-work HTML for the quote. The response may contain null or empty HTML when no scope has been saved.",
+        "description": "**Capability:** `quotes` · **Policy:** `Quotes:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns the saved scope-of-work HTML for the quote. The response may contain null or empty HTML when no scope has been saved.",
         "operationId": "v2.quotes.scope-of-work.get",
         "parameters": [
           {
@@ -6395,7 +6395,7 @@
           "Quotes"
         ],
         "summary": "Save scope-of-work HTML for a quote.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `quotes` · **Policy:** `Quotes:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nReplaces the saved scope-of-work HTML for the quote. The request body must include scopeHtml, which may contain sanitized HTML accepted by the backing quote workflow.",
+        "description": "**Capability:** `quotes` · **Policy:** `Quotes:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nReplaces the saved scope-of-work HTML for the quote. The request body must include scopeHtml, which may contain sanitized HTML accepted by the backing quote workflow.",
         "operationId": "v2.quotes.scope-of-work.update",
         "parameters": [
           {
@@ -6662,7 +6662,7 @@
           "Quotes"
         ],
         "summary": "Duplicate a quote.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `quotes` · **Policy:** `Quotes:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nCreates a new quote by duplicating the source quote identified by the route Guid. The response id is the newly created quote Guid.",
+        "description": "**Capability:** `quotes` · **Policy:** `Quotes:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nCreates a new quote by duplicating the source quote identified by the route Guid. The response id is the newly created quote Guid.",
         "operationId": "v2.quotes.duplicate",
         "parameters": [
           {
@@ -6897,7 +6897,7 @@
           "Quotes"
         ],
         "summary": "Restore a soft-deleted quote.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `quotes` · **Policy:** `Quotes:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nRestores a quote that was previously soft-deleted through the quote workflow.",
+        "description": "**Capability:** `quotes` · **Policy:** `Quotes:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nRestores a quote that was previously soft-deleted through the quote workflow.",
         "operationId": "v2.quotes.restore",
         "parameters": [
           {
@@ -7132,7 +7132,7 @@
           "Quotes"
         ],
         "summary": "Get items for a quote (extracted from full quote detail).",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `quotes` · **Policy:** `Quotes:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReads the quote detail and returns only the item collection. A missing quote returns a tenant-scoped 404.",
+        "description": "**Capability:** `quotes` · **Policy:** `Quotes:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReads the quote detail and returns only the item collection. A missing quote returns a tenant-scoped 404.",
         "operationId": "v2.quotes.items.list",
         "parameters": [
           {
@@ -7389,7 +7389,7 @@
           "Quotes"
         ],
         "summary": "Get locations for a quote.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `quotes` · **Policy:** `Quotes:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReads the quote detail and returns only the location collection for the quote.",
+        "description": "**Capability:** `quotes` · **Policy:** `Quotes:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReads the quote detail and returns only the location collection for the quote.",
         "operationId": "v2.quotes.locations.list",
         "parameters": [
           {
@@ -7646,7 +7646,7 @@
           "Quotes"
         ],
         "summary": "Get systems for a quote.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `quotes` · **Policy:** `Quotes:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReads the quote detail and returns only the system collection for the quote.",
+        "description": "**Capability:** `quotes` · **Policy:** `Quotes:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReads the quote detail and returns only the system collection for the quote.",
         "operationId": "v2.quotes.systems.list",
         "parameters": [
           {
@@ -7903,7 +7903,7 @@
           "Quotes"
         ],
         "summary": "Get phases for a quote.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `quotes` · **Policy:** `Quotes:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReads the quote detail and returns only the phase collection for the quote.",
+        "description": "**Capability:** `quotes` · **Policy:** `Quotes:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReads the quote detail and returns only the phase collection for the quote.",
         "operationId": "v2.quotes.phases.list",
         "parameters": [
           {
@@ -8160,7 +8160,7 @@
           "Agents"
         ],
         "summary": "List agents available to the current caller and optional surface.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `agents` · **Policy:** `Agents:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nFilters registered agents by requested surface, environment availability, and the tenant's AI Advisor feature state. Tool Forge is hidden outside development.",
+        "description": "**Capability:** `agents` · **Policy:** `Agents:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nFilters registered agents by requested surface, environment availability, and the tenant's AI Advisor feature state. Tool Forge is hidden outside development.",
         "operationId": "v2.agents.list",
         "parameters": [
           {
@@ -8362,7 +8362,7 @@
           "Agents"
         ],
         "summary": "Start or continue a streaming chat with an agent.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `agents` · **Policy:** `Agents:AiTask` · **Access depth:** `WorkflowTask` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `AiTaskExecution`\n\nStreams Server-Sent Events from the agent runtime. The request must include a message; sessionId can be reused by the client to continue agent state.",
+        "description": "**Capability:** `agents` · **Policy:** `Agents:AiTask` · **Access depth:** `WorkflowTask` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `AiTaskExecution`\n\nStreams Server-Sent Events from the agent runtime. The request must include a message; sessionId can be reused by the client to continue agent state.",
         "operationId": "v2.agents.chat.create",
         "parameters": [
           {
@@ -8652,7 +8652,7 @@
           "Agents"
         ],
         "summary": "List prior chat sessions for the current caller and agent.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `agents` · **Policy:** `Agents:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReads DTLog AI response traces scoped to the current tenant/user so the client can show resumable chat history.",
+        "description": "**Capability:** `agents` · **Policy:** `Agents:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReads DTLog AI response traces scoped to the current tenant/user so the client can show resumable chat history.",
         "operationId": "v2.agents.sessions.list",
         "parameters": [
           {
@@ -8894,7 +8894,7 @@
           "Agents"
         ],
         "summary": "Load a prior chat transcript for the current caller and agent session.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `agents` · **Policy:** `Agents:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns user/assistant messages reconstructed from DTLog AI response traces. Workspace canvas state remains available through the workspace endpoint using the same sessionId.",
+        "description": "**Capability:** `agents` · **Policy:** `Agents:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns user/assistant messages reconstructed from DTLog AI response traces. Workspace canvas state remains available through the workspace endpoint using the same sessionId.",
         "operationId": "v2.agents.sessions.get",
         "parameters": [
           {
@@ -9129,7 +9129,7 @@
           "Agents"
         ],
         "summary": "Get saved workspace state for an agent session.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `agents` · **Policy:** `Agents:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReads caller-scoped workspace state for the agent/session pair. AI Advisor workspaces require the AI Advisor feature to be enabled for the account.",
+        "description": "**Capability:** `agents` · **Policy:** `Agents:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReads caller-scoped workspace state for the agent/session pair. AI Advisor workspaces require the AI Advisor feature to be enabled for the account.",
         "operationId": "v2.agents.workspace.get",
         "parameters": [
           {
@@ -9361,7 +9361,7 @@
           "Agents"
         ],
         "summary": "Save workspace state for an agent session.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `agents` · **Policy:** `Agents:AiTask` · **Access depth:** `WorkflowTask` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `AiTaskExecution`\n\nPersists opaque JSON workspace state for the agent/session pair. The state object is caller scoped through PlatformContext.",
+        "description": "**Capability:** `agents` · **Policy:** `Agents:AiTask` · **Access depth:** `WorkflowTask` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `AiTaskExecution`\n\nPersists opaque JSON workspace state for the agent/session pair. The state object is caller scoped through PlatformContext.",
         "operationId": "v2.agents.workspace.update",
         "parameters": [
           {
@@ -9619,7 +9619,7 @@
           "MCP"
         ],
         "summary": "Invoke the v2 MCP JSON-RPC endpoint.",
-        "description": "<!-- x-dtools-meta -->\n\n**Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no\n\nAccepts MCP initialize, tools/list, and tools/call JSON-RPC requests. Authentication is challenged at the JSON-RPC layer when the requested method requires a D-Tools connection.",
+        "description": "**Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no\n\nAccepts MCP initialize, tools/list, and tools/call JSON-RPC requests. Authentication is challenged at the JSON-RPC layer when the requested method requires a D-Tools connection.",
         "operationId": "v2.mcp.json-rpc.invoke",
         "parameters": [
           {
@@ -9814,7 +9814,7 @@
           "Events"
         ],
         "summary": "Query platform events with optional filtering.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `events` · **Policy:** `Events:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns tenant-scoped platform events ordered by the repository default. Use type and since to narrow the result set before paging.",
+        "description": "**Capability:** `events` · **Policy:** `Events:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns tenant-scoped platform events ordered by the repository default. Use type and since to narrow the result set before paging.",
         "operationId": "v2.events.list",
         "parameters": [
           {
@@ -10036,7 +10036,7 @@
           "Platform"
         ],
         "summary": "Get the evaluated v2 feature snapshot for the current PlatformContext.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `platform` · **Policy:** `Me:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nEvaluates release features and client flags using the same release evaluator as the API release gate. The response exposes only evaluated booleans and feature summaries, never target rows or tenant/principal allowlists.",
+        "description": "**Capability:** `platform` · **Policy:** `Me:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nEvaluates release features and client flags using the same release evaluator as the API release gate. The response exposes only evaluated booleans and feature summaries, never target rows or tenant/principal allowlists.",
         "operationId": "v2.features.snapshot.get",
         "responses": {
           "200": {
@@ -10241,7 +10241,7 @@
           "Platform"
         ],
         "summary": "Get v2 service health and configuration readiness.",
-        "description": "<!-- x-dtools-meta -->\n\n**Release stage:** `GenerallyAvailable` · **Release-gated:** no · **Idempotent:** no · **Async job:** no\n\nThis unauthenticated operation is intended for service readiness checks and public API discovery. It is not release-gated and does not expose tenant-scoped data.",
+        "description": "**Release stage:** `GenerallyAvailable` · **Release-gated:** no · **Idempotent:** no · **Async job:** no\n\nThis unauthenticated operation is intended for service readiness checks and public API discovery. It is not release-gated and does not expose tenant-scoped data.",
         "operationId": "v2.platform.health.get",
         "responses": {
           "200": {
@@ -10274,7 +10274,7 @@
           "Platform jobs"
         ],
         "summary": "Get the status of a platform job.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `jobs` · **Policy:** `Jobs:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nLooks up a tenant-scoped job created by a v2 task endpoint. CompletedAt, ErrorCode, and ErrorMessage describe terminal states.",
+        "description": "**Capability:** `jobs` · **Policy:** `Jobs:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nLooks up a tenant-scoped job created by a v2 task endpoint. CompletedAt, ErrorCode, and ErrorMessage describe terminal states.",
         "operationId": "v2.platform.jobs.get",
         "parameters": [
           {
@@ -10520,7 +10520,7 @@
           "MCP"
         ],
         "summary": "Get OAuth protected-resource metadata for the v2 MCP endpoint.",
-        "description": "<!-- x-dtools-meta -->\n\n**Release stage:** `GenerallyAvailable` · **Release-gated:** no · **Idempotent:** no · **Async job:** no\n\nReturns anonymous OAuth resource metadata for MCP clients and APIM import. This discovery operation is not release-gated and does not expose tenant-scoped data.",
+        "description": "**Release stage:** `GenerallyAvailable` · **Release-gated:** no · **Idempotent:** no · **Async job:** no\n\nReturns anonymous OAuth resource metadata for MCP clients and APIM import. This discovery operation is not release-gated and does not expose tenant-scoped data.",
         "operationId": "v2.mcp.oauth-protected-resource.get",
         "parameters": [
           {
@@ -10551,7 +10551,7 @@
           "MCP"
         ],
         "summary": "Get OAuth protected-resource metadata for the v2 MCP endpoint.",
-        "description": "<!-- x-dtools-meta -->\n\n**Release stage:** `GenerallyAvailable` · **Release-gated:** no · **Idempotent:** no · **Async job:** no\n\nReturns anonymous OAuth resource metadata for MCP clients and APIM import. This discovery operation is not release-gated and does not expose tenant-scoped data.",
+        "description": "**Release stage:** `GenerallyAvailable` · **Release-gated:** no · **Idempotent:** no · **Async job:** no\n\nReturns anonymous OAuth resource metadata for MCP clients and APIM import. This discovery operation is not release-gated and does not expose tenant-scoped data.",
         "operationId": "v2.mcp.oauth-protected-resource.get",
         "responses": {
           "200": {
@@ -10572,7 +10572,7 @@
           "Platform"
         ],
         "summary": "Get all accounts accessible by the authenticated user.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `me` · **Policy:** `Me:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nMaps the principal (or delegated user for human actors) to their account memberships.\n\nThis identity endpoint returns account memberships resolved from the authenticated principal. It does not accept a tenant id because account switching is derived from token claims and PlatformContext.",
+        "description": "**Capability:** `me` · **Policy:** `Me:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nMaps the principal (or delegated user for human actors) to their account memberships.\n\nThis identity endpoint returns account memberships resolved from the authenticated principal. It does not accept a tenant id because account switching is derived from token claims and PlatformContext.",
         "operationId": "v2.me.accounts.list",
         "responses": {
           "200": {
@@ -10759,7 +10759,7 @@
           "Projects"
         ],
         "summary": "List task groups for a project.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `projects` · **Policy:** `ProjectTaskGroups:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nThe route projectId is the public project Guid. Task counts are optional and are calculated by the project task orchestration service within the caller's tenant.",
+        "description": "**Capability:** `projects` · **Policy:** `ProjectTaskGroups:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nThe route projectId is the public project Guid. Task counts are optional and are calculated by the project task orchestration service within the caller's tenant.",
         "operationId": "v2.projects.task-groups.list",
         "parameters": [
           {
@@ -11030,7 +11030,7 @@
           "Projects"
         ],
         "summary": "Create a task group for a project.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `projects` · **Policy:** `ProjectTaskGroups:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nCreates a task group under the project identified by the public project Guid. The phaseId must identify an existing phase available to that project.",
+        "description": "**Capability:** `projects` · **Policy:** `ProjectTaskGroups:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nCreates a task group under the project identified by the public project Guid. The phaseId must identify an existing phase available to that project.",
         "operationId": "v2.projects.task-groups.create",
         "parameters": [
           {
@@ -11319,7 +11319,7 @@
           "Projects"
         ],
         "summary": "Create multiple project tasks in one request.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `projects` · **Policy:** `ProjectTasks:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `TaskExecution`\n\nValidates the batch before creating tasks. Validation failures return a V2ErrorEnvelope with per-item validation errors in details.validationErrors.",
+        "description": "**Capability:** `projects` · **Policy:** `ProjectTasks:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `TaskExecution`\n\nValidates the batch before creating tasks. Validation failures return a V2ErrorEnvelope with per-item validation errors in details.validationErrors.",
         "operationId": "v2.projects.tasks.batch.create",
         "parameters": [
           {
@@ -11589,7 +11589,7 @@
           "Search"
         ],
         "summary": "Search across entities via SearchApi.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `catalog` · **Policy:** `Search:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nPerforms a tenant-scoped read search through the legacy SearchApi bridge. query is required; type can narrow the search domain when supported by SearchApi.",
+        "description": "**Capability:** `catalog` · **Policy:** `Search:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nPerforms a tenant-scoped read search through the legacy SearchApi bridge. query is required; type can narrow the search domain when supported by SearchApi.",
         "operationId": "v2.search.query",
         "parameters": [
           {
@@ -11855,7 +11855,7 @@
           "Events"
         ],
         "summary": "Create a new webhook subscription.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `webhook-subscriptions` · **Policy:** `Events:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nCreates a tenant-scoped subscription for the requested event types. signingKey must be base64 encoded so delivery signatures can be verified by the subscriber.",
+        "description": "**Capability:** `webhook-subscriptions` · **Policy:** `Events:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nCreates a tenant-scoped subscription for the requested event types. signingKey must be base64 encoded so delivery signatures can be verified by the subscriber.",
         "operationId": "v2.events.webhook-subscriptions.create",
         "parameters": [
           {
@@ -12117,7 +12117,7 @@
           "Events"
         ],
         "summary": "List all active webhook subscriptions for the current tenant.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `webhook-subscriptions` · **Policy:** `Events:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns only active subscriptions for the caller's tenant. Signing keys are not returned.",
+        "description": "**Capability:** `webhook-subscriptions` · **Policy:** `Events:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns only active subscriptions for the caller's tenant. Signing keys are not returned.",
         "operationId": "v2.events.webhook-subscriptions.list",
         "responses": {
           "200": {
@@ -12304,7 +12304,7 @@
           "Events"
         ],
         "summary": "Deactivate (soft-delete) a webhook subscription.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `webhook-subscriptions` · **Policy:** `Events:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `BoundedWrite`\n\nDeactivates the subscription id within the caller's tenant. The subscription is retained for audit/history and excluded from active delivery.",
+        "description": "**Capability:** `webhook-subscriptions` · **Policy:** `Events:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `BoundedWrite`\n\nDeactivates the subscription id within the caller's tenant. The subscription is retained for audit/history and excluded from active delivery.",
         "operationId": "v2.events.webhook-subscriptions.delete",
         "parameters": [
           {
@@ -12501,7 +12501,7 @@
           "Opportunities"
         ],
         "summary": "Create a new work item.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `work-items` · **Policy:** `WorkItems:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nCreates a tenant-scoped work item for the current PlatformContext. When DueDate is omitted, the due date defaults to seven days from the request time in UTC.",
+        "description": "**Capability:** `work-items` · **Policy:** `WorkItems:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nCreates a tenant-scoped work item for the current PlatformContext. When DueDate is omitted, the due date defaults to seven days from the request time in UTC.",
         "operationId": "v2.opportunities.work-items.create",
         "parameters": [
           {
@@ -12765,7 +12765,7 @@
           "Opportunities"
         ],
         "summary": "List work items with optional filtering.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `work-items` · **Policy:** `WorkItems:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns a page of work items for the caller's tenant. Optional filters can narrow results by status, assigned user, and related entity.",
+        "description": "**Capability:** `work-items` · **Policy:** `WorkItems:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nReturns a page of work items for the caller's tenant. Optional filters can narrow results by status, assigned user, and related entity.",
         "operationId": "v2.opportunities.work-items.list",
         "parameters": [
           {
@@ -13001,7 +13001,7 @@
           "Opportunities"
         ],
         "summary": "Get a work item by ID.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `work-items` · **Policy:** `WorkItems:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nThe work item identifier is an opaque string, not a Guid. The lookup is scoped to the caller's tenant.",
+        "description": "**Capability:** `work-items` · **Policy:** `WorkItems:Read` · **Access depth:** `Read` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no · **Async job:** no · **Workload:** `RequestResponseRead`\n\nThe work item identifier is an opaque string, not a Guid. The lookup is scoped to the caller's tenant.",
         "operationId": "v2.opportunities.work-items.get",
         "parameters": [
           {
@@ -13228,7 +13228,7 @@
           "Opportunities"
         ],
         "summary": "Update the status of a work item.",
-        "description": "<!-- x-dtools-meta -->\n\n**Capability:** `work-items` · **Policy:** `WorkItems:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nUpdates only the status field. Moving a work item to Completed or a later status sets CompletedAt to the current UTC time.",
+        "description": "**Capability:** `work-items` · **Policy:** `WorkItems:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nUpdates only the status field. Moving a work item to Completed or a later status sets CompletedAt to the current UTC time.",
         "operationId": "v2.opportunities.work-items.status.update",
         "parameters": [
           {
