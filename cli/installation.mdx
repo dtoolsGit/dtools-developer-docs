@@ -1,0 +1,226 @@
+---
+title: "CLI installation"
+description: "Install dtcloud on Windows, Linux, or macOS from a pre-built artifact, or build it yourself from source."
+---
+
+## Install from a build artifact
+
+Download the artifact for your platform from the `dtcloud-cli-release` Azure DevOps pipeline.
+The pipeline produces the following artifact families for each release:
+
+| Format | Platforms |
+| --- | --- |
+| `.zip` | Windows (`amd64`, `arm64`) |
+| `.tar.gz` | Linux (`amd64`, `arm64`), macOS (`amd64`, `arm64`) |
+| `.deb` | Linux (`amd64`, `arm64`) |
+| `.rpm` | Linux (`amd64`, `arm64`) |
+| `.msi` | Windows installer |
+| `.pkg` | macOS installer |
+
+<Note>
+  Development and PR artifacts are unsigned. Tagged release artifacts are signed. The macOS
+  `.pkg` is signed and notarized only for tagged releases.
+</Note>
+
+After extracting the archive or running the installer, verify the binary:
+
+<CodeGroup>
+
+```powershell Windows
+dtcloud.exe --version
+```
+
+```bash macOS / Linux
+dtcloud --version
+```
+
+</CodeGroup>
+
+The macOS `.pkg` installs `dtcloud` into `/usr/local/bin/dtcloud`. The Windows MSI installs
+`dtcloud.exe` under `Program Files\DToolsCloudCLI` and adds that directory to the machine
+`PATH`.
+
+## First run
+
+<Steps>
+  <Step title="Sign in">
+    Start the device-code authentication flow:
+
+    ```bash
+    dtcloud auth login
+    ```
+
+    The CLI prints a verification URL and a short code. Open the URL in any browser, enter the
+    code, and complete the Entra External ID sign-in. The resulting MSAL token is cached at
+    `~/.dtcloud/token.json` with `0600` permissions.
+  </Step>
+
+  <Step title="Check auth status">
+    Confirm the token was cached successfully:
+
+    ```bash
+    dtcloud auth status --output yaml
+    ```
+  </Step>
+
+  <Step title="List accounts">
+    See all D-Tools Cloud accounts visible to your user:
+
+    ```bash
+    dtcloud accounts list
+    ```
+  </Step>
+
+  <Step title="Select an account">
+    Persist the account you want to use for subsequent commands:
+
+    ```bash
+    dtcloud accounts use 12345
+    ```
+
+    All account-scoped commands will include `X-DTools-AccountId: 12345` automatically. Use
+    `--account <id>` for a one-off override without changing the persisted selection.
+  </Step>
+</Steps>
+
+## Selecting a profile
+
+The CLI ships with a `dev` profile configured by default. To point it at a different
+environment, create or update a profile:
+
+```bash
+dtcloud profile set staging \
+  --base-url https://stgapi.d-tools.cloud \
+  --authority https://example.ciamlogin.com/<tenant-id> \
+  --client-id <public-client-id> \
+  --scope api://<api-client-id>/access_as_user \
+  --default
+```
+
+If you already created `~/.dtcloud/config.yaml` before the dev URL was updated, reset it:
+
+```bash
+dtcloud profile set dev --base-url https://dtoolsdevapi.azure-api.net/api/v2
+```
+
+_(verify this — confirm the current dev endpoint with the D-Tools team before use)_
+
+Use a profile for a single command without changing the default:
+
+```bash
+dtcloud --profile staging clients list
+```
+
+## Build from source
+
+Use this path when you need a specific target platform, CPU architecture, or package format,
+or when no pre-built artifact is available.
+
+### Prerequisites
+
+- **Go** `1.26.3` or the version declared by `go.mod` _(verify this — check `Tools/dtcloud-cli/go.mod` for the current requirement)_.
+- **Git** (required for version metadata).
+- **Bash** on macOS/Linux or **PowerShell** on Windows.
+
+Additional tools for release-style packages:
+
+- **GoReleaser v2** and **Syft** — required for archives, debs, rpms, and SBOM generation.
+- **WiX** on a Windows host — required for `.msi` builds.
+- **`pkgbuild`** on a macOS host — required for `.pkg` builds (signing and notarization require Apple signing assets and are only performed in release CI).
+
+### Local host build
+
+Run the repo-provided validation and build script. These scripts run formatting checks,
+`go test ./...`, `go vet ./...`, and produce a local binary under `Tools/dtcloud-cli/dist/`.
+
+<CodeGroup>
+
+```bash macOS / Linux
+scripts/build.sh
+```
+
+```powershell Windows
+scripts/build.ps1
+```
+
+</CodeGroup>
+
+### Build a single target binary
+
+<CodeGroup>
+
+```bash macOS / Linux
+version="0.1.0-dev"
+commit="$(git rev-parse --short HEAD)"
+date="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 \
+  go build -trimpath \
+  -ldflags "-s -w \
+    -X dtools.cloud/dtcloud-cli/internal/buildinfo.Version=${version} \
+    -X dtools.cloud/dtcloud-cli/internal/buildinfo.Commit=${commit} \
+    -X dtools.cloud/dtcloud-cli/internal/buildinfo.Date=${date}" \
+  -o dist/dtcloud-linux-amd64 \
+  ./cmd/dtcloud
+```
+
+```powershell Windows
+$version = "0.1.0-dev"
+$commit = (git rev-parse --short HEAD)
+$date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+
+$env:GOOS = "windows"
+$env:GOARCH = "amd64"
+$env:CGO_ENABLED = "0"
+go build -trimpath `
+  -ldflags "-s -w -X dtools.cloud/dtcloud-cli/internal/buildinfo.Version=$version -X dtools.cloud/dtcloud-cli/internal/buildinfo.Commit=$commit -X dtools.cloud/dtcloud-cli/internal/buildinfo.Date=$date" `
+  -o dist/dtcloud-windows-amd64.exe `
+  ./cmd/dtcloud
+```
+
+</CodeGroup>
+
+Change `GOOS`, `GOARCH`, and the output file name for your target. Use an `.exe` suffix when
+`GOOS=windows`.
+
+### Build all packages (archives, debs, rpms)
+
+<CodeGroup>
+
+```bash macOS / Linux
+scripts/package.sh
+```
+
+```powershell Windows
+scripts/package.ps1
+```
+
+</CodeGroup>
+
+Or run GoReleaser directly:
+
+```bash
+GORELEASER_CURRENT_TAG=v0.1.0 goreleaser release --snapshot --clean
+```
+
+Artifacts are written to `Tools/dtcloud-cli/dist/`. The Windows package script also creates
+a local MSI when WiX is on `PATH`; the macOS package script also creates an unsigned `.pkg`
+when `pkgbuild` is available.
+
+### Verify the build
+
+```bash
+dist/dtcloud --version
+dist/dtcloud health --output json
+```
+
+### Common build issues
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| `goreleaser: command not found` | GoReleaser not installed | Install GoReleaser v2 and retry. |
+| `syft: command not found` | SBOM tool missing | Install Syft, or use plain `go build` for binaries only. |
+| MSI build skipped | WiX missing or not on `PATH` | Install/update WiX on a Windows host. |
+| `.pkg` build skipped | Not on macOS, or `pkgbuild` unavailable | Build `.pkg` on macOS. |
+| Windows binary missing `.exe` | Output name omitted extension | Use `.exe` suffix when `GOOS=windows`. |
+| Binary runs but auth fails | Local profile or token issue | Run `dtcloud auth status`, verify `~/.dtcloud/config.yaml`. |

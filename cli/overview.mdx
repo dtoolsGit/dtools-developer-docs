@@ -1,0 +1,180 @@
+---
+title: "CLI overview"
+description: "dtcloud is a cross-platform command-line client for the D-Tools Cloud v2 API — device-code sign-in, profiles, machine-readable output, and safe writes built in."
+---
+
+`dtcloud` is a workflow-oriented CLI for the D-Tools Cloud v2 API. It is written in Go (using
+[Cobra](https://github.com/spf13/cobra)) and compiles to a single self-contained binary for
+Windows, Linux, and macOS. It is intended for customer admins who need repeatable,
+scriptable access to common D-Tools Cloud operations.
+
+The command surface covers account administration, CRM, opportunities, quotes, projects,
+task management, files, events, webhooks, jobs, and AI agents. It is curated rather than a
+one-for-one wrapper of every API endpoint.
+
+<CardGroup cols={2}>
+  <Card title="Install" icon="download" href="/cli/installation">
+    Download a pre-built binary or build from source.
+  </Card>
+  <Card title="Command reference" icon="terminal" href="/cli/commands">
+    Full index of commands, subcommands, and flags.
+  </Card>
+</CardGroup>
+
+## Authentication model
+
+`dtcloud` authenticates with **Entra External ID (CIAM)** using the OAuth 2.0 device-code
+flow. When you run `dtcloud auth login`, the CLI prints a verification URL and a short code.
+Open the URL in any browser, enter the code, and sign in. No credentials are stored locally —
+only the resulting MSAL token cache.
+
+Token cache location:
+
+```text
+~/.dtcloud/token.json
+```
+
+The file is written with `0600` permissions. See [Authentication](/getting-started/authentication)
+for the broader authentication model.
+
+<Note>
+  The CLI requests only API/resource scopes during device-code auth. OIDC scopes such as
+  `offline_access`, `openid`, and `profile` are silently ignored if they appear in an older
+  config because the current CIAM app declines them.
+</Note>
+
+## Configuration file
+
+The config file is created on first use at:
+
+```text
+~/.dtcloud/config.yaml
+```
+
+It holds named profiles. The default `dev` profile points to the v2 development API Management
+endpoint _(verify this)_:
+
+```text
+https://dtoolsdevapi.azure-api.net/api/v2
+```
+
+Staging and production profiles are included as placeholders and can be updated when their
+final base URLs and public-client settings are available.
+
+## Profiles
+
+A profile bundles a base URL, Entra authority, client ID, and OAuth scope. You can maintain
+profiles for different environments and switch between them per command or set one as the default.
+
+List configured profiles:
+
+```bash
+dtcloud profile list
+```
+
+Create or update a profile:
+
+```bash
+dtcloud profile set staging \
+  --base-url https://stgapi.d-tools.cloud \
+  --authority https://example.ciamlogin.com/<tenant-id> \
+  --client-id <public-client-id> \
+  --scope api://<api-client-id>/access_as_user \
+  --default
+```
+
+Use a profile for a single command:
+
+```bash
+dtcloud --profile staging clients list
+```
+
+## Account selection
+
+After signing in, list the accounts visible to your user and persist the one you want to use:
+
+```bash
+dtcloud accounts list
+dtcloud accounts use 12345
+```
+
+All account-scoped requests send the selected account as:
+
+```text
+X-DTools-AccountId: 12345
+```
+
+Account-level commands fail when no account is selected. This prevents accidentally reading
+or mutating data under an ambiguous account context when your principal belongs to more than
+one account. Use `--account <id>` for a one-off override without changing the persisted
+selection.
+
+## Global flags
+
+These flags are available on every command:
+
+| Flag | Purpose |
+| --- | --- |
+| `--profile <name>` | Select a profile from `~/.dtcloud/config.yaml`. |
+| `--account <id>` | Send an explicit `X-DTools-AccountId` for this command only. |
+| `--output table,json,yaml` | Render output as a compact table, JSON, or YAML. |
+| `--query <expr>` | Apply a JMESPath expression before rendering. |
+| `--page <n>` | Request a specific page for list commands. |
+| `--page-size <n>` | Request a specific page size for list commands. |
+| `--all` | Follow v2 pagination when the response advertises more pages. |
+| `--verbose` | Print request context details (profile, account, method, path). |
+| `--debug` | Enable debug diagnostics. |
+| `--yes` | Skip destructive action confirmations. |
+| `--idempotency-key <key>` | Reuse a specific idempotency key for safe retries. |
+
+## Machine-readable output
+
+Use `--output json` when scripting:
+
+```bash
+dtcloud clients list --output json
+```
+
+Use a JMESPath query to shape the output before it is rendered:
+
+```bash
+dtcloud opportunities list \
+  --query "items[].{id:id,name:name,stage:stage}" \
+  --output table
+```
+
+Fetch all pages in a single call:
+
+```bash
+dtcloud projects list --all --page-size 100 --output json
+```
+
+Use `DTCLOUD_ACCESS_TOKEN` to supply a token directly and bypass MSAL entirely — useful
+during testing or one-off diagnostics:
+
+```bash
+DTCLOUD_ACCESS_TOKEN="<token>" dtcloud me --output json
+```
+
+## Safe writes and idempotency
+
+Create, update, duplicate, restore, batch-create, webhook-create, and agent-chat operations
+are treated as idempotent where the v2 contract supports it. If an idempotency key is not
+provided, the CLI generates one automatically and sends it as:
+
+```text
+Idempotency-Key: dtcloud-...
+```
+
+Use an explicit key when retrying the same write after an ambiguous network failure:
+
+```bash
+dtcloud --idempotency-key dtcloud-retry-quote-20260529 quotes duplicate <quote-id>
+```
+
+Destructive commands require confirmation unless `--yes` is set:
+
+```bash
+dtcloud quotes delete <quote-id>
+dtcloud --yes webhooks delete <subscription-id>
+```

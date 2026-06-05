@@ -1,0 +1,65 @@
+---
+title: "API reference overview"
+description: "How the v2 REST API reference is organized, how to authenticate, and what the per-endpoint metadata means."
+---
+
+The reference under **Endpoints** is generated directly from the live v2 OpenAPI document,
+so it always matches the running API. Each endpoint page includes an interactive playground —
+add a bearer token and send real requests.
+
+## Base URLs
+
+| Environment | Base URL |
+| --- | --- |
+| Production | `https://dtcloudapi.d-tools.cloud` _(verify this)_ |
+| Development | `https://dtoolsdevapi.azure-api.net` _(verify this)_ |
+
+All v2 paths are prefixed with `/api/v2`.
+
+## Authentication
+
+The v2 API uses **Entra External ID (CIAM)** bearer tokens. Send them in the
+`Authorization` header:
+
+```http
+Authorization: Bearer <access_token>
+```
+
+The quickest way to get a token is the CLI's device-code flow — see
+[Authentication](/getting-started/authentication). A few discovery endpoints
+(for example `GET /api/v2/health`) are anonymous.
+
+<Note>
+  The raw OpenAPI document does not declare a security scheme; the docs pipeline adds a
+  `bearerAuth` (HTTP bearer, JWT) scheme so the playground prompts for a token. _(verify this:
+  confirm the canonical scheme with the API team before publishing externally.)_
+</Note>
+
+## Reading the endpoint metadata
+
+Every operation carries D-Tools platform metadata (sourced from `x-dtools-*` OpenAPI
+extensions). The docs pipeline renders it as a badge line at the top of each endpoint
+description, e.g.:
+
+> **Capability:** `clients` · **Policy:** `Clients:Read` · **Access depth:** `Read` ·
+> **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** no ·
+> **Async job:** no · **Workload:** `RequestResponseRead`
+
+| Field | Meaning | Example values |
+| --- | --- | --- |
+| **Capability** | The capability family the endpoint belongs to. | `clients`, `contacts`, `catalog`, `files`, `opportunities`, `projects`, `quotes`, `agents`, `events`, `jobs`, `me`, `platform` |
+| **Policy** | The authorization policy your principal must satisfy. | `Clients:Read`, `Quotes:Write`, `Opportunities:AiTask`, … (24 total) |
+| **Access depth** | How far the operation can act. | `Read`, `WorkflowTask`, `BoundedWrite` |
+| **Release stage** | Default governance/release stage. | `GenerallyAvailable` |
+| **Release-gated** | Whether access is also subject to a release/rollout gate. | `yes` / `no` |
+| **Idempotent** | Whether repeating the request is safe. | `yes` / `no` |
+| **Async job** | Whether the call returns a [Job](/platform/concepts) you poll for completion. | `yes` / `no` |
+| **Workload** | The workload class (drives budgeting/rate behavior). | `RequestResponseRead`, `AiTaskExecution`, `BoundedWrite`, `TaskExecution` |
+
+See [Platform concepts](/platform/concepts) for the full model and
+[Errors](/platform/errors) for the shared error contract.
+
+<Note>
+  Only the **public** v2 surface is documented here. Admin and internal endpoints are excluded
+  at build time and verified by a CI gate.
+</Note>

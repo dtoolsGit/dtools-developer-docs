@@ -1,0 +1,87 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "D-Tools Cloud Developer",
+  "description": "Developer documentation for the D-Tools Cloud v2 platform: REST API, MCP bridge, and CLI.",
+  "colors": {
+    "primary": "#0B5FFF",
+    "light": "#4D8DFF",
+    "dark": "#0B3FA8"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": [
+              "index",
+              "getting-started/quickstart",
+              "getting-started/authentication"
+            ]
+          },
+          {
+            "group": "Platform",
+            "pages": [
+              "platform/concepts",
+              "platform/errors"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api-reference/introduction"
+            ]
+          },
+          {
+            "group": "Endpoints",
+            "openapi": "api-reference/openapi.v2.json"
+          }
+        ]
+      },
+      {
+        "tab": "MCP bridge",
+        "groups": [
+          {
+            "group": "Model Context Protocol",
+            "pages": [
+              "mcp/bridge"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "CLI",
+        "groups": [
+          {
+            "group": "dtcloud CLI",
+            "pages": [
+              "cli/overview",
+              "cli/installation",
+              "cli/commands"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "navbar": {
+    "primary": {
+      "type": "button",
+      "label": "D-Tools Cloud",
+      "href": "https://d-tools.cloud"
+    }
+  },
+  "footer": {
+    "socials": {
+      "website": "https://d-tools.cloud"
+    }
+  }
+}

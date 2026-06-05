@@ -1,0 +1,133 @@
+---
+title: "Errors"
+description: "The shared V2ErrorEnvelope contract, standard status codes every endpoint can return, how to use correlationId for support, and retry guidance."
+---
+
+Every error response from the v2 API uses a single consistent envelope format. Understanding
+this contract lets you handle errors uniformly across all endpoints.
+
+## The `V2ErrorEnvelope` shape
+
+All error responses have `Content-Type: application/json` and wrap the error details in an
+`error` object:
+
+```json
+{
+  "error": {
+    "code": "unauthorized",
+    "message": "The request could not be completed.",
+    "retryable": false,
+    "requestId": "a1b2c3d4e5f6",
+    "correlationId": "00000000000000000000000000000001",
+    "details": null
+  }
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `code` | string | A machine-readable error code (e.g. `unauthorized`, `capability_not_granted`, `account_access_denied`). Stable across releases — safe to `switch` on. |
+| `message` | string | A human-readable description of the error. May change between releases — do not parse it programmatically. |
+| `retryable` | boolean | `true` when resubmitting the same request (after a pause) is expected to succeed. |
+| `requestId` | string | A unique identifier for this specific request, generated server-side. Include this in support tickets alongside `correlationId`. |
+| `correlationId` | string | A per-request tracing identifier. For human-initiated requests the CLI or your code can supply this via the `X-Correlation-ID` request header; otherwise the platform generates one. Always include both `requestId` and `correlationId` when contacting D-Tools support. |
+| `details` | object or null | Optional structured detail about the error. Present on some specific error codes (e.g. `account_selection_required` includes `account_ids`). Shape varies by code — treat as supplemental diagnostic data. |
+
+The `X-Correlation-ID` response header always echoes the correlation ID for easy access
+without parsing the body.
+
+## Standard status codes
+
+Every v2 endpoint can return the following status codes in addition to its documented success
+and resource-specific error codes:
+
+| Status | Code | `retryable` | Meaning |
+| --- | --- | --- | --- |
+| `401` | `unauthorized` or `permission_missing` | false | No valid bearer token, or the token is missing required D-Tools claims. See [Authentication](/getting-started/authentication). |
+| `403` | `account_access_denied`, `capability_not_granted`, `channel_not_allowed`, or similar | false | Authenticated but not authorized. The principal failed a policy, capability, access-depth, release gate, channel, or budget check. |
+| `429` | `rate_limit_exceeded` or `budget_exceeded` | true | Request rejected by throttling or an AI workload budget. Back off and retry — see [Retry guidance](#retry-guidance). |
+| `500` | `internal_error` | false | Unexpected server failure. Use `correlationId` and `requestId` when reporting the issue. |
+| `503` | `dependency_unavailable` or `feature_unavailable` | true | A required platform dependency is temporarily unavailable, or a release gate has not been opened for your account. Retry with backoff; if `feature_unavailable` persists, contact D-Tools. |
+
+<Note>
+  The `400`, `404`, and `409` codes are endpoint-specific and documented individually in the
+  [API reference](/api-reference/introduction). The five codes above apply universally.
+</Note>
+
+## Retry guidance
+
+Not all errors are worth retrying. Use the `retryable` flag in the envelope as your primary
+signal:
+
+**Retryable (`retryable: true`):**
+
+- `429 Too Many Requests` — rate limit or AI budget exceeded. Wait before retrying. When the
+  response includes a `Retry-After` header _(verify this: confirm whether the API emits
+  `Retry-After` on 429)_, honor it; otherwise apply exponential backoff starting at 1 second.
+- `503 Service Unavailable` — transient dependency or infrastructure issue. Retry with
+  exponential backoff. If the error code is `feature_unavailable`, the release gate for
+  your account may not be open — contact D-Tools after a reasonable retry window.
+
+**Not retryable (`retryable: false`):**
+
+- `400 Bad Request` — your request body, query string, or route value is invalid. Fix the
+  input before retrying.
+- `401 Unauthorized` — get a fresh token, then retry.
+- `403 Forbidden` — a permission or configuration issue. Do not retry until you have
+  resolved the underlying access problem.
+- `404 Not Found` — the resource does not exist in the tenant scope. Do not retry.
+- `500 Internal Server Error` — unexpected platform failure. Do not retry automatically;
+  report using `requestId` and `correlationId`.
+
+### Example: 429 retry loop
+
+```python
+import time, requests
+
+def call_with_retry(url, headers, max_retries=4):
+    delay = 1.0
+    for attempt in range(max_retries):
+        response = requests.get(url, headers=headers)
+        if response.status_code == 429:
+            body = response.json()
+            if body.get("error", {}).get("retryable"):
+                time.sleep(delay)
+                delay *= 2
+                continue
+        return response
+    return response
+```
+
+## Using `correlationId` for support
+
+When you contact D-Tools support about an API error, always include:
+
+1. The `correlationId` from the error envelope (or the `X-Correlation-ID` response header).
+2. The `requestId` from the error envelope.
+3. The endpoint, HTTP method, and approximate timestamp.
+
+These identifiers tie your request to the server-side log trace and dramatically reduce
+investigation time.
+
+The `dtcloud` CLI surfaces both identifiers when a request fails:
+
+```bash
+dtcloud --verbose clients list
+```
+
+## Common error codes
+
+| Code | Status | Description |
+| --- | --- | --- |
+| `unauthorized` | 401 | Missing or invalid bearer token |
+| `permission_missing` | 401 | Token is valid but lacks required D-Tools identity claims |
+| `account_access_denied` | 403 | `X-DTools-AccountId` is not in the principal's allowed accounts |
+| `account_selection_required` | 400 | Token covers multiple accounts and `X-DTools-AccountId` was not sent |
+| `invalid_account_header` | 400 | `X-DTools-AccountId` is not a positive integer |
+| `capability_not_granted` | 403 | Principal's token does not include the required capability family |
+| `channel_not_allowed` | 403 | Calling client application is not mapped to an allowed channel |
+| `rate_limit_exceeded` | 429 | Too many requests within the rate-limit window |
+| `budget_exceeded` | 429 | AI workload budget for the account is exhausted |
+| `feature_unavailable` | 503 | Endpoint is release-gated and not yet enabled for this account |
+| `dependency_unavailable` | 503 | A required platform dependency is temporarily unavailable |
+| `internal_error` | 500 | Unexpected server failure |

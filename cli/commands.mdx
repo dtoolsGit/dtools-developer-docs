@@ -1,0 +1,287 @@
+---
+title: "CLI command reference"
+description: "Complete command reference for dtcloud — auth, profiles, accounts, CRM, opportunities, quotes, projects, tasks, work items, files, search, webhooks, events, jobs, and agents."
+---
+
+Run `dtcloud <command> --help` for command-specific flags and usage.
+
+Account-level commands require either a persisted account from
+`dtcloud accounts use <account-id>` or a one-off `--account <account-id>` override.
+Auth, profile, account discovery, `me`, `features`, and `health` commands can run
+without a selected account.
+
+See [Global flags](/cli/overview#global-flags) for flags available on every command.
+
+## Auth, profiles, and context
+
+| Command | Purpose |
+| --- | --- |
+| `dtcloud auth login` | Sign in with Entra External ID device-code flow. |
+| `dtcloud auth logout` | Delete the local MSAL token cache. |
+| `dtcloud auth status` | Check whether the current profile has a usable cached token. |
+| `dtcloud profile list` | List configured CLI profiles. |
+| `dtcloud profile set <name>` | Create or update a profile. |
+| `dtcloud accounts list` | List accounts visible to the signed-in user. |
+| `dtcloud accounts use <account-id>` | Persist the selected account on the current profile. |
+| `dtcloud me` | Show current principal and account memberships. |
+| `dtcloud features` | Show the v2 feature snapshot. |
+| `dtcloud health` | Show v2 platform health. |
+
+```bash
+# Check token status
+dtcloud auth status --output yaml
+
+# List and select an account
+dtcloud accounts list
+dtcloud accounts use 12345
+
+# Override the account for a single command
+dtcloud --account 12345 projects list
+```
+
+## CRM
+
+| Command | Purpose |
+| --- | --- |
+| `dtcloud clients list` | List CRM clients. |
+| `dtcloud clients get <id>` | Get a client by public ID. |
+| `dtcloud clients create` | Create a client from flags or `--file`. |
+| `dtcloud clients update <id>` | Update a client from flags or `--file`. |
+| `dtcloud contacts list` | List CRM contacts. |
+| `dtcloud contacts get <id>` | Get a contact by internal ID. |
+
+**Client write flags:**
+
+| Flag | Purpose |
+| --- | --- |
+| `--name` | Client name. |
+| `--type` | Client type. |
+| `--number` | Client number. |
+| `--email` | Primary email. |
+| `--phone` | Primary phone. |
+| `--owner` | Owner value accepted by v2. |
+| `--file` | JSON request body file. |
+
+```bash
+dtcloud clients list --search "Acme"
+dtcloud clients get <client-id> --output yaml
+dtcloud contacts list --companies "Acme"
+```
+
+## Opportunities and quotes
+
+| Command | Purpose |
+| --- | --- |
+| `dtcloud opportunities list` | List opportunities. |
+| `dtcloud opportunities get <id>` | Get an opportunity by public ID. |
+| `dtcloud opportunities context <id>` | Get opportunity context for downstream workflows. |
+| `dtcloud quotes list --opportunity-id <id>` | List quotes for an opportunity. |
+| `dtcloud quotes get <id>` | Get a quote by public ID. |
+| `dtcloud quotes create --opportunity-id <id>` | Create a quote for an opportunity. |
+| `dtcloud quotes duplicate <id>` | Duplicate a quote. |
+| `dtcloud quotes restore <id>` | Restore a deleted quote. |
+| `dtcloud quotes delete <id>` | Soft-delete a quote. Requires confirmation unless `--yes`. |
+| `dtcloud quotes sow get <id>` | Get quote scope-of-work HTML. |
+| `dtcloud quotes sow set <id> --file <html>` | Save quote scope-of-work HTML from a file. |
+
+```bash
+dtcloud opportunities list --stages "Proposal"
+dtcloud opportunities context <opportunity-id> --output json
+
+dtcloud quotes list --opportunity-id <opportunity-id>
+dtcloud quotes create --opportunity-id <opportunity-id>
+dtcloud quotes duplicate <quote-id>
+dtcloud quotes sow get <quote-id> --output json
+dtcloud quotes sow set <quote-id> --file ./scope-of-work.html
+
+# Retry a duplicate with an explicit idempotency key
+dtcloud --idempotency-key dtcloud-retry-quote-20260529 quotes duplicate <quote-id>
+
+# Delete with confirmation bypass
+dtcloud --yes quotes delete <quote-id>
+```
+
+## Projects and tasks
+
+| Command | Purpose |
+| --- | --- |
+| `dtcloud projects list` | List projects. |
+| `dtcloud projects get <id>` | Get a project by public ID. |
+| `dtcloud projects items <id>` | List project items. |
+| `dtcloud project-task-groups list <project-id>` | List project task groups. |
+| `dtcloud project-task-groups create <project-id>` | Create a project task group. |
+| `dtcloud project-tasks batch-create --file <tasks.json\|tasks.csv>` | Create project tasks in bulk. |
+
+**Project task group create flags:**
+
+| Flag | Purpose |
+| --- | --- |
+| `--name` | Required task group name. |
+| `--phase-id` | Required project phase id. |
+| `--color` | Optional hex color. |
+| `--start-date` | Optional start date. |
+| `--end-date` | Optional end date. |
+
+```bash
+dtcloud projects list --search "Office"
+dtcloud projects items <project-id> --Approved
+
+dtcloud project-task-groups list <project-id>
+dtcloud project-task-groups create <project-id> \
+  --name "Rough-in" \
+  --phase-id 2 \
+  --color "#337ab7"
+```
+
+**Batch-create from JSON:**
+
+```json
+{
+  "tasks": [
+    {
+      "projectId": "project-public-id",
+      "groupId": 123,
+      "name": "Pull speaker wire",
+      "assigneeUserId": 456
+    }
+  ]
+}
+```
+
+```bash
+dtcloud project-tasks batch-create --file tasks.json
+```
+
+**Batch-create from CSV:**
+
+```csv
+projectId,groupId,name,assigneeUserId,dueDate
+project-public-id,123,Pull speaker wire,456,2026-06-15
+```
+
+```bash
+dtcloud project-tasks batch-create --file tasks.csv
+```
+
+## Work items
+
+| Command | Purpose |
+| --- | --- |
+| `dtcloud work-items list` | List work items. |
+| `dtcloud work-items get <id>` | Get a work item. |
+| `dtcloud work-items create` | Create a work item. |
+| `dtcloud work-items status <id> --status <status>` | Update a work item's status. |
+
+**Work item list filters:**
+
+| Flag | Purpose |
+| --- | --- |
+| `--entityType` | Related entity type accepted by v2. |
+| `--entityId` | Related entity id. |
+| `--assignedUserId` | Assigned user id. |
+| `--status` | Work item status. |
+
+**Work item create flags:**
+
+| Flag | Purpose |
+| --- | --- |
+| `--title` | Required title. |
+| `--description` | Description. |
+| `--type` | Work item type. Defaults to `task`. |
+| `--priority` | `1=Low`, `2=Normal`, `3=High`. |
+| `--assigned-user-id` | Assigned user id. |
+| `--entity-type` | Related entity type. |
+| `--entity-id` | Related entity id. |
+| `--due-date` | Due date accepted by v2. |
+
+```bash
+dtcloud work-items list --entityType opportunity --entityId <opportunity-id>
+dtcloud work-items create \
+  --title "Review proposal" \
+  --entity-type opportunity \
+  --entity-id <opportunity-id>
+dtcloud work-items status <work-item-id> --status 3
+```
+
+## Files
+
+| Command | Purpose |
+| --- | --- |
+| `dtcloud files list --entity-type <type> --entity-id <id>` | List files attached to an entity. |
+| `dtcloud files get <id>` | Get file details. |
+| `dtcloud files url <id>` | Print the signed file URL. |
+| `dtcloud files download <id> --out <path>` | Download a file through its signed URL. |
+
+```bash
+dtcloud files list --entity-type project --entity-id <project-id>
+dtcloud files url <file-id>
+dtcloud files download <file-id> --out ./downloaded-file.pdf
+```
+
+## Search, webhooks, events, and jobs
+
+| Command | Purpose |
+| --- | --- |
+| `dtcloud search --text <query>` | Search across v2 entities. |
+| `dtcloud webhooks list` | List webhook subscriptions. |
+| `dtcloud webhooks create` | Create a webhook subscription. |
+| `dtcloud webhooks delete <id>` | Deactivate a webhook subscription. Requires confirmation unless `--yes`. |
+| `dtcloud events list` | Query platform events. |
+| `dtcloud jobs get <id>` | Get an async job. |
+| `dtcloud jobs wait <id>` | Poll a job until terminal status. |
+
+**Webhook create flags:**
+
+| Flag | Purpose |
+| --- | --- |
+| `--url` | Required HTTPS webhook receiver URL. |
+| `--event-type` | Required event type. Repeat or comma-separate for multiple types. |
+| `--signing-key-base64` | Optional base64 signing key. If omitted, the CLI generates a 32-byte key and prints it once — store it immediately. |
+
+```bash
+dtcloud search --text "conference room" --type project
+
+dtcloud webhooks list
+dtcloud webhooks create \
+  --url https://hooks.example.com/dtools \
+  --event-type QuoteCreated \
+  --event-type ProjectUpdated
+
+dtcloud --yes webhooks delete <subscription-id>
+
+dtcloud events list --eventType QuoteCreated --entityId <quote-id>
+dtcloud jobs get <job-id>
+dtcloud jobs wait <job-id> --interval 5s --timeout 10m
+```
+
+## Agents
+
+| Command | Purpose |
+| --- | --- |
+| `dtcloud agents list` | List available v2 agents. |
+| `dtcloud agents list --surface <surface>` | Filter agents by surface. |
+| `dtcloud agents chat <agent-id> --message <text>` | Send a message and stream the response. |
+
+**Agent chat flags:**
+
+| Flag | Purpose |
+| --- | --- |
+| `--message` | Required message text. |
+| `--session-id` | Stable session id for follow-up turns in the same conversation. |
+| `--context-file` | JSON file containing `pageContext`. |
+
+```bash
+dtcloud agents list
+
+dtcloud agents chat <agent-id> --message "Summarize this opportunity"
+
+dtcloud agents chat <agent-id> \
+  --session-id admin-review-123 \
+  --context-file opportunity-context.json \
+  --message "What needs attention before quoting?"
+```
+
+<Note>
+  The MVP AI surface is `agents list` and `agents chat`. The commands `draft-scope-of-work`
+  and `product-ai-chat` are intentionally excluded from this release.
+</Note>

@@ -1,0 +1,155 @@
+---
+title: "MCP bridge"
+description: "Connect AI clients to D-Tools Cloud over the Model Context Protocol — list accounts, check connection status, and ask the AI Advisor, all inside your auth and tenant boundary."
+---
+
+The **MCP bridge** is a [Model Context Protocol](https://modelcontextprotocol.io) endpoint
+hosted inside the v2 API, behind the same authentication and tenant isolation as the rest of
+the platform. It lets MCP-capable clients (Claude Desktop, Cursor, ChatGPT, and similar) work
+with D-Tools data on behalf of a signed-in user.
+
+| | |
+| --- | --- |
+| **Endpoint** | `POST /api/v2/mcp` |
+| **Transport** | Streamable HTTP, JSON-RPC 2.0 |
+| **Protocol version** | `2025-06-18` _(verify this — advances with the MCP spec)_ |
+| **Server identity** | `dtools-cloud` — "D-Tools Cloud" |
+| **Auth** | Entra External ID (CIAM) bearer token; challenged at the JSON-RPC layer |
+
+<Note>
+  This is the live, supported MCP surface for D-Tools Cloud. A separate legacy Azure Functions
+  MCP server (a single `generate_sow` tool) is **not** documented here and is not part of the
+  supported v2 surface.
+</Note>
+
+## How the handshake works
+
+`initialize` is answered anonymously so a client can discover the server. Any method that
+touches D-Tools data (`tools/list`, `tools/call`) requires authentication — if the request has
+no valid bearer token, the bridge returns a JSON-RPC error with code `-32001` and a
+`WWW-Authenticate` header pointing at the OAuth resource metadata.
+
+<Steps>
+  <Step title="initialize">
+    The client calls `initialize` and receives the protocol version, capabilities (`tools`),
+    and server info — no token required.
+  </Step>
+  <Step title="Authenticate">
+    The client obtains an Entra External ID access token (see
+    [Authentication](/getting-started/authentication)) and sends it as
+    `Authorization: Bearer <token>`.
+  </Step>
+  <Step title="tools/list and tools/call">
+    Authenticated requests can list the tools and invoke them. Authorization is enforced per
+    call (see [Authorization](#authorization)).
+  </Step>
+</Steps>
+
+## OAuth discovery
+
+MCP clients that support OAuth can discover how to authenticate from the protected-resource
+metadata document:
+
+```http
+GET /api/v2/mcp/.well-known/oauth-protected-resource
+```
+
+It returns the resource identifier, the authorization server, supported scopes, and the
+bearer method:
+
+```json
+{
+  "resource": "https://<host>/api/v2/mcp",
+  "authorization_servers": ["https://<ext-domain>/<ext-tenant-id>/v2.0"],
+  "scopes_supported": ["openid", "profile", "email", "offline_access", "api://<ext-client-id>/access_as_user"],
+  "bearer_methods_supported": ["header"],
+  "resource_documentation": "https://<host>/api/v2/mcp/docs"
+}
+```
+
+The exact host, authorization server, and `access_as_user` scope are environment-specific and
+resolved from configuration _(verify this for each environment)_.
+
+## Authorization
+
+| Operation | Required policy |
+| --- | --- |
+| `tools/list` | `Mcp:Connect` |
+| `tools/call` → `dtools_get_connection_status` | `Mcp:Connect` |
+| `tools/call` → `dtools_list_accounts` | `Mcp:Connect` |
+| `tools/call` → `dtools_ask_advisor` | `Mcp:Connect` **and** `Agents:AiTask` |
+
+If the connection isn't permitted, the bridge returns JSON-RPC error `-32003`.
+
+## Tools
+
+### `dtools_get_connection_status`
+
+Returns whether the D-Tools connection is active, the selected account id, the count of
+accessible accounts, and whether the AI Advisor is enabled.
+
+- **Input:** none
+- **Output:** `connected` (boolean), `selectedAccountId` (integer), `accessibleAccountCount` (integer), `advisorEnabled` (boolean)
+- **Hints:** read-only, idempotent, non-destructive
+
+### `dtools_list_accounts`
+
+Lists the D-Tools account ids in the authenticated user's token and identifies the account
+selected for this request.
+
+- **Input:** none
+- **Output:** `selectedAccountId` (integer), `accounts[]` of `{ accountId, tenantId, selected }`
+- **Hints:** read-only, idempotent, non-destructive
+
+### `dtools_ask_advisor`
+
+Asks the D-Tools AI Advisor a question about the authenticated tenant, using the same
+approved-view-backed Advisor capability used by the Cloud app.
+
+- **Input:**
+  - `question` (string, **required**) — the tenant-specific question to ask.
+  - `sessionId` (string, optional) — conversation id; omit to start a new session.
+- **Output:** `answer` (string), `sessionId` (string), `accountId` (integer), `artifacts[]`,
+  `events[]`, and optional `code` / `correlationId` / `unblocker` / `surface`.
+- **Hints:** read-only, **not** idempotent (each ask runs the Advisor)
+
+<Note>
+  `dtools_ask_advisor` requires the AI Advisor to be **enabled for the account** and registered
+  in the environment. When it isn't, the tool returns a structured error such as
+  `advisor_not_enabled` or `advisor_not_registered` rather than failing the call.
+</Note>
+
+## Example: list tools
+
+```json
+// Request
+{ "jsonrpc": "2.0", "id": 1, "method": "tools/list" }
+```
+
+```json
+// Response (abridged)
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "tools": [
+      { "name": "dtools_get_connection_status", "title": "Get D-Tools connection status", "...": "..." },
+      { "name": "dtools_list_accounts", "title": "List D-Tools accounts", "...": "..." },
+      { "name": "dtools_ask_advisor", "title": "Ask D-Tools AI Advisor", "...": "..." }
+    ]
+  }
+}
+```
+
+## Error codes
+
+| Code | Meaning |
+| --- | --- |
+| `-32600` | Invalid JSON-RPC request |
+| `-32601` | Method not supported |
+| `-32602` | Invalid params (e.g. missing tool name or required argument) |
+| `-32001` | Authentication required (includes resource metadata for OAuth discovery) |
+| `-32003` | Authenticated connection not allowed to use MCP / the requested tool |
+
+Tool-level failures (for example, Advisor not enabled) are returned as **successful** JSON-RPC
+responses with `isError: true` and a structured `content` payload, per the MCP spec.

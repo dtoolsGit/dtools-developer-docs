@@ -1,0 +1,54 @@
+---
+title: "D-Tools Cloud Developer Platform"
+description: "Build on the D-Tools Cloud v2 platform — REST API, MCP bridge, and CLI, documented for humans and LLMs alike."
+---
+
+The D-Tools Cloud **v2 platform** gives you programmatic access to catalog, CRM, quotes,
+opportunities, projects, files, events, and AI Advisor capabilities across three surfaces:
+
+<CardGroup cols={3}>
+  <Card title="REST API" icon="code" href="/api-reference/introduction">
+    The v2 HTTP API. OpenAPI-described, with an interactive playground and rich
+    per-endpoint metadata (release stage, idempotency, capability family, and more).
+  </Card>
+  <Card title="MCP bridge" icon="robot" href="/mcp/bridge">
+    A Model Context Protocol endpoint (`POST /api/v2/mcp`) that lets AI clients connect to
+    D-Tools, list accounts, and ask the AI Advisor inside your auth and tenant boundary.
+  </Card>
+  <Card title="CLI" icon="terminal" href="/cli/overview">
+    `dtcloud` — a cross-platform command-line client for the v2 API with device-code
+    sign-in and machine-readable output.
+  </Card>
+</CardGroup>
+
+## Start here
+
+<Steps>
+  <Step title="Authenticate">
+    Sign in with Entra External ID (CIAM). The fastest path is the CLI's device-code flow.
+    See [Authentication](/getting-started/authentication).
+  </Step>
+  <Step title="Make your first call">
+    Follow the [Quickstart](/getting-started/quickstart) to list your accounts and read a
+    resource from the v2 API.
+  </Step>
+  <Step title="Go deeper">
+    Learn the [platform concepts](/platform/concepts) — tenants, capability families,
+    release stages, and the metadata on every endpoint — then explore the
+    [API reference](/api-reference/introduction).
+  </Step>
+</Steps>
+
+## Built for humans and LLMs
+
+These docs are designed to be consumed by AI agents as well as people:
+
+- Every page is available as clean Markdown (append `.md` to any page URL).
+- A site-wide `/llms.txt` index and `/llms-full.txt` corpus are published for large-context
+  models (generated automatically when the site is deployed).
+- The API reference is generated from the live OpenAPI document, so it never drifts from the API.
+
+<Note>
+  Admin and internal endpoints are intentionally excluded from this site. The reference shows
+  only the public v2 surface.
+</Note>

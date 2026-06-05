@@ -1,0 +1,142 @@
+---
+title: "Quickstart"
+description: "Install the CLI, sign in, and make your first D-Tools Cloud v2 API call in under five minutes."
+---
+
+This guide takes you from zero to a working API call using the `dtcloud` CLI. If you prefer
+raw HTTP, every step also shows the equivalent `curl` command.
+
+<Steps>
+  <Step title="Install the CLI">
+    Download the pre-built binary for your platform from the `dtcloud-cli-release` Azure
+    DevOps pipeline _(verify this: confirm the public download URL before publishing)_
+    and verify the install:
+
+    <CodeGroup>
+      ```bash macOS / Linux
+      dtcloud --version
+      ```
+
+      ```powershell Windows
+      dtcloud.exe --version
+      ```
+    </CodeGroup>
+
+    <Note>
+      The CLI is a single self-contained binary — no runtime or package manager required.
+      See [CLI installation](/cli/installation) for build-from-source instructions.
+    </Note>
+  </Step>
+
+  <Step title="Sign in with device-code flow">
+    Run the login command. The CLI prints a short code and a URL — open the URL in any
+    browser, enter the code, and complete the Entra External ID sign-in flow.
+
+    ```bash
+    dtcloud auth login
+    ```
+
+    Once authenticated, the CLI caches your MSAL token at `~/.dtcloud/token.json`
+    (permissions `0600`). You can verify the token is valid at any time:
+
+    ```bash
+    dtcloud auth status --output yaml
+    ```
+
+    See [Authentication](/getting-started/authentication) for a full explanation of the
+    auth model, how tokens are issued, and how to authenticate programmatically.
+  </Step>
+
+  <Step title="List your accounts and select one">
+    Your user may belong to more than one D-Tools Cloud account. List them and persist the
+    one you want to use for subsequent commands:
+
+    ```bash
+    dtcloud accounts list
+    dtcloud accounts use 12345
+    ```
+
+    All account-scoped requests send the selected account in the `X-DTools-AccountId`
+    header. Use `--account <id>` for a one-off override without changing the persisted
+    selection.
+
+    <Note>
+      Account-scoped commands fail locally when no account is selected. This prevents
+      accidentally reading or mutating data under an ambiguous account context.
+    </Note>
+  </Step>
+
+  <Step title="Make your first API call">
+    Fetch the accounts accessible to your principal. This is a good smoke test — it
+    requires a valid token and exercises the account context resolution path.
+
+    <CodeGroup>
+      ```bash CLI
+      dtcloud me --output json
+      ```
+
+      ```bash curl
+      curl -s \
+        -H "Authorization: Bearer <your_access_token>" \
+        https://dtcloudapi.d-tools.cloud/api/v2/me/accounts
+      # Base URL: verify this — https://dtcloudapi.d-tools.cloud is the production host
+      ```
+    </CodeGroup>
+
+    A successful response lists your accounts and your Entra object ID:
+
+    ```json
+    {
+      "accounts": [
+        { "accountId": 12345, "tenantId": 12345, "name": "Acme AV" }
+      ],
+      "entraObjectId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "email": "you@example.com"
+    }
+    ```
+
+    Now try listing clients — a real account-scoped read:
+
+    <CodeGroup>
+      ```bash CLI
+      dtcloud clients list --output json
+      ```
+
+      ```bash curl
+      curl -s \
+        -H "Authorization: Bearer <your_access_token>" \
+        -H "X-DTools-AccountId: 12345" \
+        "https://dtcloudapi.d-tools.cloud/api/v2/clients?pageSize=5"
+      # Base URL: verify this
+      ```
+    </CodeGroup>
+
+    To get a raw bearer token for use in `curl` or the API reference playground, bypass
+    MSAL by reading the cached token, or set the `DTCLOUD_ACCESS_TOKEN` environment
+    variable for one-off diagnostic calls:
+
+    ```bash
+    DTCLOUD_ACCESS_TOKEN="<token>" dtcloud me --output json
+    ```
+  </Step>
+</Steps>
+
+## Where to go next
+
+<CardGroup cols={3}>
+  <Card title="API reference" icon="code" href="/api-reference/introduction">
+    Explore every endpoint with the interactive playground. Add your bearer token to send
+    real requests.
+  </Card>
+  <Card title="MCP bridge" icon="robot" href="/mcp/bridge">
+    Connect an AI client (Claude Desktop, Cursor, etc.) to D-Tools Cloud over MCP.
+  </Card>
+  <Card title="CLI commands" icon="terminal" href="/cli/commands">
+    Full command reference — accounts, clients, quotes, projects, webhooks, agents, and more.
+  </Card>
+</CardGroup>
+
+<Note>
+  If a call returns `401` or `403`, see [Authentication](/getting-started/authentication)
+  and [Errors](/platform/errors) for what each status means and how to resolve it.
+</Note>

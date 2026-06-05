@@ -1,0 +1,211 @@
+---
+title: "Platform concepts"
+description: "The building blocks of the D-Tools Cloud v2 platform — tenants, principals, capability families, endpoint metadata, async jobs, and events."
+---
+
+This page explains the platform model you need to understand when calling the v2 API. For
+the practical effect each concept has on a specific endpoint, check the endpoint's metadata
+badges in the [API reference](/api-reference/introduction).
+
+## Tenants and accounts
+
+The D-Tools Cloud platform is **multi-tenant**. Every piece of data belongs to exactly one
+tenant and is only accessible within that tenant boundary. No query, no response, and no
+side effect ever crosses tenant lines.
+
+For developers, the relevant concept is the **account** — the identifier your requests are
+scoped to. An account and a tenant map one-to-one in the current model. When you send a
+request, you identify the account with the `X-DTools-AccountId` request header:
+
+```http
+X-DTools-AccountId: 12345
+```
+
+Your access token encodes which accounts your principal belongs to. If your token covers
+more than one account and you omit the header, the API responds with
+`400 account_selection_required` and lists the available account IDs. If you send an account
+ID that is not in your token, the API responds with `403 account_access_denied`.
+
+Use `GET /api/v2/me/accounts` (or `dtcloud accounts list`) to discover which accounts your
+token covers.
+
+## Principals and actor types
+
+Every authenticated request has a **principal** — the identity behind the token. The
+platform resolves each principal to an **actor type** that determines which policies and
+workload rules apply:
+
+| Actor type | Description |
+| --- | --- |
+| `Human` | A user signed in via the Entra External ID CIAM delegated flow (device-code or authorization code). The token carries an `scp` claim (delegated scope). |
+| `ServicePrincipal` | A background service or integration using an application token (no `scp`, has `roles`). |
+| `McpBridge` | An MCP-specific actor type used by the MCP bridge when it calls on behalf of a connected client. |
+| `FirstPartyAI` | A first-party AI service with elevated AI task permissions. |
+
+Each principal also carries:
+
+- **PrincipalId** — the Entra object ID (`oid` claim).
+- **CredentialId** — for human users this is the `oid`; for application tokens it is the `azp` (client app ID).
+- **CorrelationId** — a per-request identifier used for log tracing and support. Include this in any support ticket.
+
+## Capability families
+
+Endpoints are grouped into **capability families**. Your token must be granted the relevant
+family for the call to succeed. The canonical families are:
+
+| Family | Covers |
+| --- | --- |
+| `catalog` | Product catalog, search, and item metadata |
+| `crm` | Clients, contacts, and CRM-adjacent customer records |
+| `files` | File metadata, uploads, downloads, and transfer workflows |
+| `quotes` | Quote, proposal, and change-order workflows |
+| `opportunities` | Sales opportunities and pipeline records |
+| `projects` | Projects, task groups, task execution, and project workflow |
+| `events` | Platform event delivery and event-feed access |
+| `agents` | AI agent discovery, workspace state, and task execution |
+
+Additional platform-level families (`jobs`, `me`, `platform`) appear on infrastructure
+endpoints (job status, account listing, health). These are always available when your token
+is valid.
+
+A `403` with the code `capability_not_granted` means your principal's token does not include
+the required family. Contact your D-Tools Cloud account administrator.
+
+## Endpoint metadata
+
+Every public v2 endpoint carries a set of metadata fields that describe its authorization
+requirements, behavior guarantees, and workload characteristics. The
+[API reference](/api-reference/introduction) renders these as a badge line at the top of
+each endpoint description. Here is what each field means:
+
+### Authorization policy
+
+The policy your principal must satisfy to call the endpoint. Policies combine a capability
+family with an access depth, for example `Clients:Read`, `Quotes:Write`,
+`Opportunities:AiTask`. A `403` response means the policy check failed.
+
+### Access depth
+
+How far the operation is permitted to act on your data:
+
+| Access depth | What it allows |
+| --- | --- |
+| `Read` | Read-only data access — list, get, search |
+| `WorkflowTask` | Initiates a workflow action or AI task (may create a job) |
+| `BoundedWrite` | Creates or modifies a resource within defined limits |
+
+Your token carries a maximum access depth. Calling an endpoint that requires a higher depth
+than your token permits results in a `403`.
+
+### Workload class
+
+The computational cost category of the operation:
+
+| Workload class | Typical operations |
+| --- | --- |
+| `RequestResponseRead` | Standard reads — list, get, search |
+| `BoundedWrite` | Creates and updates with bounded resource consumption |
+| `TaskExecution` | Background task execution |
+| `AiTaskExecution` | AI-powered operations (scope-of-work generation, AI chat) |
+
+Workload class drives rate limiting and budget enforcement. `AiTaskExecution` operations
+consume a per-account AI budget. Exceeding a budget returns `429` with a `retryable: true`
+envelope.
+
+### Release stage and release gating
+
+- **Release stage** — the maturity tier of the endpoint. All currently public endpoints are
+  `GenerallyAvailable`.
+- **Release-gated** — when `yes`, access is subject to an additional per-account rollout
+  gate beyond the standard capability check. If your account has not been rolled in, the API
+  returns `503 feature_unavailable`.
+
+### Idempotency
+
+Endpoints marked **Idempotent: yes** are safe to retry with the same `Idempotency-Key`
+header. Send the same key on retries after a network failure — the platform will return the
+original response without re-executing the operation. The CLI generates idempotency keys
+automatically for write operations.
+
+```http
+Idempotency-Key: dtcloud-unique-key-for-this-request
+```
+
+## Async jobs
+
+Some operations are long-running and return a **job** immediately instead of a result. The
+endpoint description says **Async job: yes** when this applies. Currently, the async
+endpoints are:
+
+- `POST /api/v2/tasks/product-ai-chat` — AI product chat task
+- `POST /api/v2/opportunities/{id}/tasks/draft-scope-of-work` — AI scope-of-work generation
+
+An async endpoint returns a `202 Accepted` response with a job ID. Poll the job until it
+reaches a terminal state:
+
+```http
+GET /api/v2/jobs/{id}
+```
+
+The job response shape:
+
+```json
+{
+  "id": "job-xxxxxxxx",
+  "jobType": "opportunities.draft-scope-of-work",
+  "status": "Running",
+  "progress": 40,
+  "resultReference": null,
+  "errorCode": null,
+  "errorMessage": null,
+  "retryable": null,
+  "correlationId": "xxxxxxxx",
+  "createdAt": "2026-06-04T10:00:00Z",
+  "startedAt": "2026-06-04T10:00:01Z",
+  "completedAt": null
+}
+```
+
+Terminal statuses are `Completed` and `Failed`. When the status is `Failed`, `errorCode` and
+`errorMessage` describe the failure. If `retryable` is `true`, you can submit the original
+request again. The `resultReference` field, when present after `Completed`, is a reference to
+the job output (for example, a blob URL).
+
+The CLI's `dtcloud jobs wait` command polls a job until it completes:
+
+```bash
+dtcloud jobs wait <job-id> --interval 5s --timeout 10m
+```
+
+## Events and webhooks
+
+The platform records **events** for significant state changes (quote created, project
+updated, and similar). You can access the event feed two ways:
+
+**Pull:** Query the event log directly via `GET /api/v2/events`. Events are tenant-scoped
+and filterable by event type and entity ID.
+
+**Push (webhooks):** Subscribe to event types with `POST /api/v2/webhook-subscriptions`.
+The platform delivers a signed HTTP POST to your endpoint for each matching event. Manage
+your subscriptions via the webhook endpoints or with `dtcloud webhooks`.
+
+```bash
+# List recent events
+dtcloud events list --eventType QuoteCreated
+
+# Create a webhook subscription
+dtcloud webhooks create \
+  --url https://hooks.example.com/dtools \
+  --event-type QuoteCreated \
+  --event-type ProjectUpdated
+```
+
+Webhook delivery uses a signing key to sign the payload. When you create a subscription
+without providing `--signing-key-base64`, the CLI generates a 32-byte key and prints it
+once — store it immediately.
+
+<Note>
+  Events and webhooks are in the `events` capability family and require the `Events:Read`
+  or `Events:Write` policy. See the [API reference](/api-reference/introduction) for the
+  full schema of event and webhook payloads.
+</Note>

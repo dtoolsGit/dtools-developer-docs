@@ -1,0 +1,141 @@
+---
+title: "Authentication"
+description: "How to authenticate with D-Tools Cloud v2 — Entra External ID bearer tokens, the device-code flow, programmatic OAuth, and which endpoints are anonymous."
+---
+
+The D-Tools Cloud v2 API uses **Entra External ID (CIAM)** for authentication. Every
+protected endpoint expects an `Authorization: Bearer <access_token>` header containing a
+signed JWT issued by the Entra CIAM authority.
+
+## How to get a token
+
+### Option 1: CLI device-code flow (recommended for humans)
+
+The fastest path to a working token is the `dtcloud` CLI's built-in device-code flow:
+
+```bash
+# Install the CLI first — see /cli/installation
+dtcloud auth login
+```
+
+The CLI:
+
+1. Prints a short alphanumeric code and a verification URL.
+2. You open the URL in any browser and enter the code.
+3. You complete the Entra External ID sign-in flow.
+4. The CLI caches the resulting MSAL token at `~/.dtcloud/token.json` (permissions `0600`).
+
+The CLI requests only API/resource scopes. OIDC scopes such as `offline_access`, `openid`,
+and `profile` are silently ignored if they appear in an older config because the CIAM app
+declines them.
+
+Verify the token is valid at any time:
+
+```bash
+dtcloud auth status --output yaml
+```
+
+To use a token directly with `curl` or the API reference playground, bypass MSAL with the
+environment variable:
+
+```bash
+DTCLOUD_ACCESS_TOKEN="<token>" dtcloud me --output json
+```
+
+### Option 2: Programmatic OAuth (service clients and server-side apps)
+
+Programmatic clients — server-side apps, CI pipelines, or integrations — obtain tokens
+directly from the Entra CIAM authority using the OAuth 2.0 authorization code or
+client-credentials flow. The required scope is:
+
+```
+api://<ext-client-id>/access_as_user
+```
+
+_(verify this: the exact `ext-client-id` value is environment-specific and must be
+confirmed with the D-Tools Cloud team before publishing)_
+
+Configure your OAuth client to:
+
+- **Authority:** the Entra External ID CIAM authority for the environment
+  (`https://<tenant-id>.ciamlogin.com` _(verify this)_).
+- **Scope:** `api://<ext-client-id>/access_as_user` _(verify this)_.
+- **Client-id:** your application's registered client ID _(verify this: obtain from the
+  D-Tools Cloud team)_.
+
+The CLI's `profile set` command shows the shape of a programmatic profile:
+
+```bash
+dtcloud profile set staging \
+  --base-url https://stgapi.d-tools.cloud \
+  --authority https://example.ciamlogin.com/<tenant-id> \
+  --client-id <public-client-id> \
+  --scope api://<api-client-id>/access_as_user \
+  --default
+```
+
+## How to send the token
+
+Include the access token as a Bearer token in the `Authorization` header on every request:
+
+```http
+Authorization: Bearer <access_token>
+```
+
+For account-scoped endpoints, also send the account you want to operate under:
+
+```http
+X-DTools-AccountId: 12345
+```
+
+If your token covers more than one account and you omit `X-DTools-AccountId`, the API
+returns a `400 account_selection_required` error listing the available account IDs. See
+[Platform concepts](/platform/concepts) for the account model and [Errors](/platform/errors)
+for the full error contract.
+
+## Token lifetime and renewal
+
+MSAL (used by the CLI) handles token renewal automatically via its cached token. Tokens are
+short-lived; MSAL silently refreshes them before expiry. For programmatic clients, implement
+standard OAuth token-refresh logic using your SDK's silent-acquire path.
+
+## Anonymous endpoints
+
+A small number of v2 endpoints do not require a bearer token:
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /api/v2/health` | Service readiness check and API discovery |
+| `POST /api/v2/mcp` (`initialize` method only) | MCP handshake — client discovery before auth |
+| `GET /api/v2/mcp/.well-known/oauth-protected-resource` | MCP OAuth discovery metadata |
+
+All other `/api/v2/*` endpoints require a valid bearer token. Requests without a token (or
+with an invalid token) receive a `401` response with a `V2ErrorEnvelope` body — see
+[Errors](/platform/errors).
+
+<Note>
+  Per-user or per-plan documentation gating is not enabled today. The developer docs are
+  publicly accessible without authentication.
+</Note>
+
+## MCP OAuth discovery
+
+AI clients that support OAuth can discover how to authenticate from the MCP
+protected-resource metadata endpoint:
+
+```http
+GET /api/v2/mcp/.well-known/oauth-protected-resource
+```
+
+This returns the resource identifier, authorization server URL, supported scopes, and bearer
+method. See [MCP bridge](/mcp/bridge) for the full MCP authentication flow.
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| `401 unauthorized` | No token or expired token | Re-run `dtcloud auth login` or refresh your OAuth token |
+| `401` with `permission_missing` | Token is missing required D-Tools claims | Ensure your OAuth app is registered correctly with the D-Tools Cloud team |
+| `403 channel_not_allowed` | Client application not mapped to an allowed channel | Contact the D-Tools Cloud team to register your application |
+| `403 account_access_denied` | `X-DTools-AccountId` does not match your token | Verify the account ID with `dtcloud accounts list` |
+| `400 account_selection_required` | Token covers multiple accounts and no `X-DTools-AccountId` was sent | Send the `X-DTools-AccountId` header or run `dtcloud accounts use <id>` |

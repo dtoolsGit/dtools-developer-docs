@@ -1,0 +1,6 @@
+# Mintlify / Node local artifacts
+node_modules/
+.mintlify/
+.next/
+*.log
+.DS_Store
