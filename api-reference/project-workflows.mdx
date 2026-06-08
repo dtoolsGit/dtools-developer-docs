@@ -1,0 +1,342 @@
+---
+title: "Project workflow APIs"
+description: "How to use the v2 workflow endpoints for winning opportunities, adding line items, uploading files, managing payment schedules, creating invoices, purchase-order lifecycle commands, and marking project items installed."
+---
+
+The v2 platform now exposes the core quote-to-project workflows that previously required
+public v1 or Angular/internal v1 calls. These endpoints keep the v2 platform model:
+bearer authentication, account-scoped `PlatformContext`, public GUID route IDs, release
+governance metadata, usage recording, standard error envelopes, and idempotency support for
+write calls.
+
+Use this guide for sequencing and behavioral rules. Use the generated endpoint pages under
+**Endpoints** for the complete schemas, response types, and playground examples.
+
+## What changed
+
+Historically, these workflows were split across public CloudApi v1 and Angular/internal v1
+services. v2 now puts the same operations behind governed bearer-token APIs:
+
+- Opportunity win creates the project through the existing opportunity/project workflow.
+- Quote and project item writes call the same quote/project item manager paths the app uses.
+- Payment schedules and invoices use the existing project payment managers.
+- Install-status updates remain lifecycle commands, not generic field patches.
+- GUID-backed file uploads use the existing file upload manager after v2 entity resolution.
+- Purchase-order status, archive, and delete actions use the existing purchase-order workflow.
+- Registration, anonymous payment-session, and recipient checkout flows stay deferred.
+
+## Workflow sequence
+
+| Step | Endpoint | Policy |
+| --- | --- | --- |
+| Win an opportunity and create its project | `POST /api/v2/opportunities/{id}/win` | `Opportunities:Write` |
+| Add quote line items | `POST /api/v2/quotes/{id}/items` | `Quotes:Write` |
+| Add project items through a change order | `POST /api/v2/projects/{projectId}/change-orders/{changeOrderId}/items` | `Projects:Write` |
+| Upload a file to a supported entity | `POST /api/v2/files` | `Files:Write` |
+| Read or replace project payment schedules | `GET` / `PUT /api/v2/projects/{projectId}/payment-schedules` | `Projects:Read` / `Projects:Write` |
+| Read or replace change-order payment schedules | `GET` / `PUT /api/v2/projects/{projectId}/change-orders/{changeOrderId}/payment-schedules` | `Projects:Read` / `Projects:Write` |
+| List or create project invoices | `GET` / `POST /api/v2/projects/{projectId}/invoices` | `Projects:Read` / `Projects:Write` |
+| Update invoice/payment status | `PUT /api/v2/projects/{projectId}/invoices/{invoiceId}/status` | `Projects:Write` |
+| Mark project item rows installed | `PUT /api/v2/projects/{projectId}/items/install-status` | `Projects:Write` |
+| Update purchase-order status | `PUT /api/v2/purchase-orders/{id}/status` | `PurchaseOrders:Write` |
+| Archive or unarchive a purchase order | `PUT /api/v2/purchase-orders/{id}/archive` | `PurchaseOrders:Write` |
+| Delete a purchase order | `DELETE /api/v2/purchase-orders/{id}` | `PurchaseOrders:Write` |
+
+<Note>
+  All `POST` and `PUT` endpoints above accept the `Idempotency-Key` header. Use the same key
+  when retrying after a timeout or network failure so the platform can replay the prior result
+  instead of executing the workflow twice. `DELETE /api/v2/purchase-orders/{id}` is a lifecycle
+  command with manager-owned side effects; do not retry it blindly after an ambiguous network
+  failure unless you first re-read the purchase order.
+</Note>
+
+## Before you call
+
+Every non-anonymous v2 call requires:
+
+```http
+Authorization: Bearer <access_token>
+X-DTools-AccountId: <account-id>
+```
+
+The bearer token identifies the platform principal. `X-DTools-AccountId` selects the tenant
+context when the token can access more than one account. The API resolves the account into
+`PlatformContext`, bridges that context into the legacy `Session`, and then calls the existing
+workflow managers.
+
+Writes should include an idempotency key:
+
+```http
+Idempotency-Key: win-opportunity-9d6048f4-20260608
+```
+
+The key is scoped by tenant, method, path, and key value. Reusing it on the same request lets
+the API replay the original successful response. Do not reuse the same key for a different
+request body.
+
+## Identifiers
+
+Route IDs are public GUIDs. v2 resolves those GUIDs inside the authenticated tenant before
+calling the existing D-Tools workflow managers. This applies to opportunities, projects,
+quotes, change orders, clients, invoices/payments, payment terms, purchase orders, files,
+quote items, and project items.
+
+Some request-body fields still follow the generated endpoint schema for the existing manager
+contract. When a field is a public resource identity in v2, it is represented as a GUID. When
+the schema exposes a catalog, status, location, system, phase, or payment status numeric field,
+use the values returned by the relevant read/catalog endpoint until a dedicated v2 catalog for
+that field is available.
+
+Install statuses are different: they are selected by status/state name rather than public
+GUID because the current install-status catalog is state/name based. Partial install means
+passing only the project item row GUIDs that should be marked installed. Quantity-level
+partial install requires splitting quantities first, then updating the subset of item rows.
+
+## Endpoint details
+
+### Upload a file
+
+```http
+POST /api/v2/files
+Content-Type: multipart/form-data
+```
+
+Uploads a file through the existing file upload manager after resolving the target entity's
+public GUID inside the authenticated tenant. The multipart form fields are:
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `entityType` | Yes | Supported values: `client`, `opportunity`, `project`, `quote`, `product`, `purchase-order`, `service-call`, `service-contract`. |
+| `entityId` | Yes | Public GUID for the target entity. |
+| `type` | No | Optional legacy file type/category string. |
+| `file` | Yes | Binary file part. |
+
+Example:
+
+```bash
+curl -X POST "https://dtoolsdevapi.azure-api.net/api/v2/files" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-DTools-AccountId: $ACCOUNT_ID" \
+  -H "Idempotency-Key: file-upload-20260608-001" \
+  -F "entityType=project" \
+  -F "entityId=7a88f502-0d4d-4bd4-b195-f00c9c163dd3" \
+  -F "type=Document" \
+  -F "file=@./proposal.pdf"
+```
+
+The response is the v2 public file detail shape. It uses the file public GUID, not the legacy
+integer file ID returned by the internal upload manager. Internal-ID-only child uploads,
+logo/special upload workflows, and recipient-token upload flows are not part of this v2
+bearer-token endpoint.
+
+### Win an opportunity
+
+```http
+POST /api/v2/opportunities/{id}/win
+```
+
+Marks the opportunity as won and creates the project. The route `id` is the public opportunity
+GUID. The body supplies the accepted quote GUID:
+
+```json
+{
+  "quoteId": "5b1464a4-35db-4c66-86f6-f2ae3f328908",
+  "actualCloseDate": "2026-06-08T00:00:00Z",
+  "siManagedTypeId": 1
+}
+```
+
+The response is a `V2IdResponse` whose `id` is the created project GUID. The existing workflow
+handles quote acceptance, project creation, project payment/invoice side effects, activities,
+notifications, and webhooks.
+
+### Add quote line items
+
+```http
+POST /api/v2/quotes/{id}/items
+```
+
+Adds products, packages, allowances, or labor rows to a quote. The route `id` is the public
+quote GUID. The request body follows the generated `AddQuoteItems` schema and is processed by
+the same quote item manager used by the existing app workflow.
+
+The endpoint returns the added quote item rows in a `V2ListResponse`. Route-level quote
+ownership is tenant-scoped before manager execution.
+
+### Add project items through a change order
+
+```http
+POST /api/v2/projects/{projectId}/change-orders/{changeOrderId}/items
+```
+
+Adds project item rows through a project change order. Both route IDs are public GUIDs.
+Approved-project direct item add is intentionally not exposed in v2. Add items through a
+change order so locked-change-order rules, inventory guards, and manager side effects remain
+preserved.
+
+The endpoint returns the added project item rows in a `V2ListResponse`.
+
+### Manage payment schedules
+
+```http
+GET /api/v2/projects/{projectId}/payment-schedules
+PUT /api/v2/projects/{projectId}/payment-schedules
+GET /api/v2/projects/{projectId}/change-orders/{changeOrderId}/payment-schedules
+PUT /api/v2/projects/{projectId}/change-orders/{changeOrderId}/payment-schedules
+```
+
+The `GET` endpoints return project or change-order payment terms. The `PUT` endpoints replace
+the schedule through the existing payment term manager.
+
+Existing payment-term GUIDs are preserved when provided. When a new term omits `uniqueId`, the
+manager generates one. Payment-term status, trued-up values, paid invoice constraints, and
+change-order side effects remain manager-owned.
+
+### List and create project invoices
+
+```http
+GET /api/v2/projects/{projectId}/invoices
+POST /api/v2/projects/{projectId}/invoices
+```
+
+`GET` returns project invoices/payments for the project GUID. `POST` creates an invoice/payment
+from project payment-term GUIDs through `PaymentManager.CreatePayment`.
+
+When `clientId` is omitted on create, the project client is used. The response is a
+`V2IdResponse` whose `id` is the public invoice/payment GUID.
+
+### Update invoice/payment status
+
+```http
+PUT /api/v2/projects/{projectId}/invoices/{invoiceId}/status
+```
+
+Updates the status of an invoice/payment that belongs to the project route GUID. The invoice ID
+is a public GUID. The request supplies the payment status and optional paid amount/date:
+
+```json
+{
+  "statusId": 2,
+  "paidAmount": 5412.5,
+  "paidDate": "2026-06-20T00:00:00Z"
+}
+```
+
+The status update uses the existing payment manager, including validation and side effects.
+
+### Mark project items installed
+
+```http
+PUT /api/v2/projects/{projectId}/items/install-status
+```
+
+Applies an install status to one or more project item row GUIDs:
+
+```json
+{
+  "itemIds": [
+    "e99ab7e1-55bb-4f55-a7e0-5190b19a6770",
+    "a7be9a11-9c2e-4c5d-93d4-d9af8b9b65da"
+  ],
+  "installStatus": "Installed",
+  "installState": "Installed"
+}
+```
+
+Use `installStatus` when you know the tenant status name. `installState` is an optional
+fallback state name. Partial install is row-based: pass only the item rows that should receive
+the status.
+
+### Update purchase-order status
+
+```http
+PUT /api/v2/purchase-orders/{id}/status
+```
+
+Updates a purchase order through the existing purchase-order lifecycle manager. The route
+`id` is the public purchase-order GUID. Supported status values are:
+
+| Status | Effect |
+| --- | --- |
+| `draft` | Mark the purchase order as draft. |
+| `draft-completed` | Mark draft preparation complete. |
+| `ordered` | Mark the purchase order ordered. |
+| `partially-received` | Mark the purchase order partially received. |
+| `received` | Mark the purchase order received. |
+| `canceled` | Cancel the purchase order. |
+
+The API also accepts common client spelling variants such as `draftCompleted`,
+`partially_received`, and `cancelled`, but the canonical values above are preferred.
+
+```json
+{
+  "status": "ordered"
+}
+```
+
+The response is a `V2OperationResponse` for the same purchase-order GUID. The manager keeps
+the existing permission checks and side effects.
+
+### Archive or unarchive a purchase order
+
+```http
+PUT /api/v2/purchase-orders/{id}/archive
+```
+
+Sets the archived flag through the existing purchase-order archive workflow:
+
+```json
+{
+  "archive": true
+}
+```
+
+Use `false` to unarchive. The route `id` is the public purchase-order GUID.
+
+### Delete a purchase order
+
+```http
+DELETE /api/v2/purchase-orders/{id}
+```
+
+Deletes a purchase order using the existing OrderApi v1 manager path. Deletion can affect
+purchase-order project items, addresses, files, activities, notifications, integrations,
+events, and inventory state through the downstream manager. v2 only resolves the public GUID,
+checks the platform policy, and calls the legacy workflow.
+
+## Manager behavior
+
+These endpoints are v2 controllers over the existing workflow managers. They do not implement
+parallel business logic. Existing manager permissions, locked-change-order checks, inventory
+guards, project payment term side effects, invoice status rules, activities, notifications,
+file-upload rules, purchase-order side effects, and webhooks still run downstream.
+
+Direct approved-project item add is intentionally not exposed. Add items to approved projects
+through a change order so the same locked-state and inventory behavior used by the D-Tools app
+is preserved.
+
+Purchase-order create, supplier ordering, send/email, Amazon direct-order, and batch-create
+workflows remain planned separately because they introduce more supplier, item, external-send,
+and marketplace side effects than the existing status/archive/delete commands.
+
+## Error handling
+
+All errors use the shared `V2ErrorEnvelope` contract. Common codes include:
+
+| Status | Typical cause |
+| --- | --- |
+| `400 invalid_argument` | Bad GUID format, missing required body, missing item/payment term IDs, or invalid status input. |
+| `401 unauthorized` | Missing or invalid bearer token. |
+| `403 permission_missing` | The principal lacks the required policy, such as `Projects:Write`. |
+| `404 not_found` | The route GUID does not resolve inside the selected tenant. |
+| `409 conflict` | Manager validation failed because the workflow state does not allow the requested change. |
+| `429 budget_exceeded` | Platform budget/rate policy blocked the request. |
+| `503 feature_unavailable` | Release gate or platform configuration makes the endpoint unavailable for this tenant/principal. |
+
+Include the `correlationId` from the error response when contacting support.
+
+## Registration
+
+Registration, anonymous payment-session, and recipient checkout workflows are deferred from
+this parity phase. They remain outside the normal bearer-token v2 surface until their auth and
+recipient-token model is split from the standard platform API.
