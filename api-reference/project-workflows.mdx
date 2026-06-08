@@ -21,7 +21,7 @@ services. v2 now puts the same operations behind governed bearer-token APIs:
 - Quote and project item writes call the same quote/project item manager paths the app uses.
 - Payment schedules and invoices use the existing project payment managers.
 - Install-status updates remain lifecycle commands, not generic field patches.
-- GUID-backed file uploads and file link/name/visibility/delete commands use the existing file manager after v2 entity resolution.
+- GUID-backed file uploads, parent-scoped project/quote location and system uploads, and file link/name/visibility/delete commands use the existing file manager after v2 entity resolution.
 - Purchase-order status, archive, delete, send/email, ADI direct-order, and Amazon direct-order actions use the existing purchase-order workflow.
 - Service-call state transitions use the existing ServiceApi manager so visit, payment, inventory, checklist, activity, and webhook side effects stay intact.
 - Registration, anonymous payment-session, and recipient checkout flows stay deferred.
@@ -34,6 +34,7 @@ services. v2 now puts the same operations behind governed bearer-token APIs:
 | Add quote line items | `POST /api/v2/quotes/{id}/items` | `Quotes:Write` |
 | Add project items through a change order | `POST /api/v2/projects/{projectId}/change-orders/{changeOrderId}/items` | `Projects:Write` |
 | Upload a file to a supported entity | `POST /api/v2/files` | `Files:Write` |
+| Upload a file to a project or quote location/system | `POST /api/v2/projects/{projectId}/locations/{locationId}/files`, `POST /api/v2/projects/{projectId}/systems/{systemId}/files`, `POST /api/v2/quotes/{quoteId}/locations/{locationId}/files`, `POST /api/v2/quotes/{quoteId}/systems/{systemId}/files` | `Files:Write` |
 | Upload unattached file content | `POST /api/v2/files/unattached` | `Files:Write` |
 | Create or update a file link | `POST /api/v2/files/links`, `PUT /api/v2/files/{id}/link` | `Files:Write` |
 | Rename, show/hide, or delete a file | `PUT /api/v2/files/{id}/name`, `PUT /api/v2/files/{id}/field-user-visibility`, `DELETE /api/v2/files/{id}` | `Files:Write` |
@@ -85,8 +86,8 @@ request body.
 
 Route IDs are public GUIDs. v2 resolves those GUIDs inside the authenticated tenant before
 calling the existing D-Tools workflow managers. This applies to opportunities, projects,
-quotes, change orders, clients, invoices/payments, payment terms, purchase orders, files,
-quote items, project items, and service calls.
+quotes, change orders, project and quote locations/systems, clients, invoices/payments,
+payment terms, purchase orders, files, quote items, project items, and service calls.
 
 Some request-body fields still follow the generated endpoint schema for the existing manager
 contract. When a field is a public resource identity in v2, it is represented as a GUID. When
@@ -132,9 +133,45 @@ curl -X POST "https://dtoolsdevapi.azure-api.net/api/v2/files" \
 ```
 
 The response is the v2 public file detail shape. It uses the file public GUID, not the legacy
-integer file ID returned by the internal upload manager. Internal-ID-only child uploads,
-logo/special upload workflows, and recipient-token upload flows are not part of this v2
-bearer-token endpoint.
+integer file ID returned by the internal upload manager. Use this endpoint for root-level
+entity attachments.
+
+### Upload location and system files
+
+```http
+POST /api/v2/projects/{projectId}/locations/{locationId}/files
+POST /api/v2/projects/{projectId}/systems/{systemId}/files
+POST /api/v2/quotes/{quoteId}/locations/{locationId}/files
+POST /api/v2/quotes/{quoteId}/systems/{systemId}/files
+Content-Type: multipart/form-data
+```
+
+These routes cover the Angular/internal v1 project and quote location/system upload
+workflows without exposing legacy child row IDs. v2 resolves the public project or quote GUID
+first, then resolves the public location or system GUID inside that parent. A location/system
+GUID that belongs to a different parent returns `404`.
+
+The multipart form fields are:
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `type` | No | Optional legacy file type/category string. |
+| `file` | Yes | Binary file part. |
+
+Example:
+
+```bash
+curl -X POST "https://dtoolsdevapi.azure-api.net/api/v2/projects/7a88f502-0d4d-4bd4-b195-f00c9c163dd3/locations/3c6de30c-19d5-44f1-b32f-4e0e0f13f8ec/files" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-DTools-AccountId: $ACCOUNT_ID" \
+  -H "Idempotency-Key: project-location-file-20260608-001" \
+  -F "type=Document" \
+  -F "file=@./rack-elevation.pdf"
+```
+
+Drawing, task, service-plan, proposal, payment, subscription, logo/special upload workflows,
+and recipient-token upload flows are still separate parity targets because those v1 paths use
+internal child IDs, domain-specific URL contracts, or anonymous-token semantics.
 
 ### Manage file links and metadata
 
