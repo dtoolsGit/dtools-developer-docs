@@ -9,6 +9,20 @@ bearer authentication, account-scoped `PlatformContext`, public GUID route IDs, 
 governance metadata, usage recording, standard error envelopes, and idempotency support for
 write calls.
 
+Use this guide for sequencing and behavioral rules. Use the generated endpoint pages under
+**Endpoints** for the complete schemas, response types, and playground examples.
+
+## What changed
+
+Historically, these workflows were split across public CloudApi v1 and Angular/internal v1
+services. v2 now puts the same operations behind governed bearer-token APIs:
+
+- Opportunity win creates the project through the existing opportunity/project workflow.
+- Quote and project item writes call the same quote/project item manager paths the app uses.
+- Payment schedules and invoices use the existing project payment managers.
+- Install-status updates remain lifecycle commands, not generic field patches.
+- Registration, anonymous payment-session, and recipient checkout flows stay deferred.
+
 ## Workflow sequence
 
 | Step | Endpoint | Policy |
@@ -28,6 +42,30 @@ write calls.
   instead of executing the workflow twice.
 </Note>
 
+## Before you call
+
+Every non-anonymous v2 call requires:
+
+```http
+Authorization: Bearer <access_token>
+X-DTools-AccountId: <account-id>
+```
+
+The bearer token identifies the platform principal. `X-DTools-AccountId` selects the tenant
+context when the token can access more than one account. The API resolves the account into
+`PlatformContext`, bridges that context into the legacy `Session`, and then calls the existing
+workflow managers.
+
+Writes should include an idempotency key:
+
+```http
+Idempotency-Key: win-opportunity-9d6048f4-20260608
+```
+
+The key is scoped by tenant, method, path, and key value. Reusing it on the same request lets
+the API replay the original successful response. Do not reuse the same key for a different
+request body.
+
 ## Identifiers
 
 Route IDs are public GUIDs. v2 resolves those GUIDs inside the authenticated tenant before
@@ -35,10 +73,136 @@ calling the existing D-Tools workflow managers. This applies to opportunities, p
 quotes, change orders, clients, invoices/payments, payment terms, quote items, and project
 items.
 
+Some request-body fields still follow the generated endpoint schema for the existing manager
+contract. When a field is a public resource identity in v2, it is represented as a GUID. When
+the schema exposes a catalog, status, location, system, phase, or payment status numeric field,
+use the values returned by the relevant read/catalog endpoint until a dedicated v2 catalog for
+that field is available.
+
 Install statuses are different: they are selected by status/state name rather than public
 GUID because the current install-status catalog is state/name based. Partial install means
 passing only the project item row GUIDs that should be marked installed. Quantity-level
 partial install requires splitting quantities first, then updating the subset of item rows.
+
+## Endpoint details
+
+### Win an opportunity
+
+```http
+POST /api/v2/opportunities/{id}/win
+```
+
+Marks the opportunity as won and creates the project. The route `id` is the public opportunity
+GUID. The body supplies the accepted quote GUID:
+
+```json
+{
+  "quoteId": "5b1464a4-35db-4c66-86f6-f2ae3f328908",
+  "actualCloseDate": "2026-06-08T00:00:00Z",
+  "siManagedTypeId": 1
+}
+```
+
+The response is a `V2IdResponse` whose `id` is the created project GUID. The existing workflow
+handles quote acceptance, project creation, project payment/invoice side effects, activities,
+notifications, and webhooks.
+
+### Add quote line items
+
+```http
+POST /api/v2/quotes/{id}/items
+```
+
+Adds products, packages, allowances, or labor rows to a quote. The route `id` is the public
+quote GUID. The request body follows the generated `AddQuoteItems` schema and is processed by
+the same quote item manager used by the existing app workflow.
+
+The endpoint returns the added quote item rows in a `V2ListResponse`. Route-level quote
+ownership is tenant-scoped before manager execution.
+
+### Add project items through a change order
+
+```http
+POST /api/v2/projects/{projectId}/change-orders/{changeOrderId}/items
+```
+
+Adds project item rows through a project change order. Both route IDs are public GUIDs.
+Approved-project direct item add is intentionally not exposed in v2. Add items through a
+change order so locked-change-order rules, inventory guards, and manager side effects remain
+preserved.
+
+The endpoint returns the added project item rows in a `V2ListResponse`.
+
+### Manage payment schedules
+
+```http
+GET /api/v2/projects/{projectId}/payment-schedules
+PUT /api/v2/projects/{projectId}/payment-schedules
+GET /api/v2/projects/{projectId}/change-orders/{changeOrderId}/payment-schedules
+PUT /api/v2/projects/{projectId}/change-orders/{changeOrderId}/payment-schedules
+```
+
+The `GET` endpoints return project or change-order payment terms. The `PUT` endpoints replace
+the schedule through the existing payment term manager.
+
+Existing payment-term GUIDs are preserved when provided. When a new term omits `uniqueId`, the
+manager generates one. Payment-term status, trued-up values, paid invoice constraints, and
+change-order side effects remain manager-owned.
+
+### List and create project invoices
+
+```http
+GET /api/v2/projects/{projectId}/invoices
+POST /api/v2/projects/{projectId}/invoices
+```
+
+`GET` returns project invoices/payments for the project GUID. `POST` creates an invoice/payment
+from project payment-term GUIDs through `PaymentManager.CreatePayment`.
+
+When `clientId` is omitted on create, the project client is used. The response is a
+`V2IdResponse` whose `id` is the public invoice/payment GUID.
+
+### Update invoice/payment status
+
+```http
+PUT /api/v2/projects/{projectId}/invoices/{invoiceId}/status
+```
+
+Updates the status of an invoice/payment that belongs to the project route GUID. The invoice ID
+is a public GUID. The request supplies the payment status and optional paid amount/date:
+
+```json
+{
+  "statusId": 2,
+  "paidAmount": 5412.5,
+  "paidDate": "2026-06-20T00:00:00Z"
+}
+```
+
+The status update uses the existing payment manager, including validation and side effects.
+
+### Mark project items installed
+
+```http
+PUT /api/v2/projects/{projectId}/items/install-status
+```
+
+Applies an install status to one or more project item row GUIDs:
+
+```json
+{
+  "itemIds": [
+    "e99ab7e1-55bb-4f55-a7e0-5190b19a6770",
+    "a7be9a11-9c2e-4c5d-93d4-d9af8b9b65da"
+  ],
+  "installStatus": "Installed",
+  "installState": "Installed"
+}
+```
+
+Use `installStatus` when you know the tenant status name. `installState` is an optional
+fallback state name. Partial install is row-based: pass only the item rows that should receive
+the status.
 
 ## Manager behavior
 
@@ -50,6 +214,22 @@ and webhooks still run downstream.
 Direct approved-project item add is intentionally not exposed. Add items to approved projects
 through a change order so the same locked-state and inventory behavior used by the D-Tools app
 is preserved.
+
+## Error handling
+
+All errors use the shared `V2ErrorEnvelope` contract. Common codes include:
+
+| Status | Typical cause |
+| --- | --- |
+| `400 invalid_argument` | Bad GUID format, missing required body, missing item/payment term IDs, or invalid status input. |
+| `401 unauthorized` | Missing or invalid bearer token. |
+| `403 permission_missing` | The principal lacks the required policy, such as `Projects:Write`. |
+| `404 not_found` | The route GUID does not resolve inside the selected tenant. |
+| `409 conflict` | Manager validation failed because the workflow state does not allow the requested change. |
+| `429 budget_exceeded` | Platform budget/rate policy blocked the request. |
+| `503 feature_unavailable` | Release gate or platform configuration makes the endpoint unavailable for this tenant/principal. |
+
+Include the `correlationId` from the error response when contacting support.
 
 ## Registration
 
