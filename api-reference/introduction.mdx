@@ -47,8 +47,8 @@ description, e.g.:
 
 | Field | Meaning | Example values |
 | --- | --- | --- |
-| **Capability** | The capability family the endpoint belongs to. | `clients`, `contacts`, `catalog`, `files`, `opportunities`, `projects`, `quotes`, `procurement`, `agents`, `events`, `jobs`, `me`, `platform` |
-| **Policy** | The authorization policy your principal must satisfy. | `Clients:Read`, `Quotes:Write`, `Opportunities:AiTask`, … (24 total) |
+| **Capability** | The capability family the endpoint belongs to. | `clients`, `contacts`, `catalog`, `files`, `opportunities`, `projects`, `quotes`, `procurement`, `service`, `agents`, `events`, `jobs`, `me`, `platform` |
+| **Policy** | The authorization policy your principal must satisfy. | `Clients:Read`, `Quotes:Write`, `Opportunities:AiTask`, `ServiceCalls:Write`, … |
 | **Access depth** | How far the operation can act. | `Read`, `WorkflowTask`, `BoundedWrite` |
 | **Release stage** | Default governance/release stage. | `GenerallyAvailable` |
 | **Release-gated** | Whether access is also subject to a release/rollout gate. | `yes` / `no` |
@@ -62,9 +62,10 @@ See [Platform concepts](/platform/concepts) for the full model and
 ## Workflow parity additions
 
 The reference now includes v2 workflow endpoints for winning opportunities into projects,
-adding quote and change-order line items, GUID-backed file uploads, managing project and
-change-order payment schedules, creating project invoices, updating invoice/payment status,
-marking project item rows installed, and running purchase-order status/archive/delete commands.
+adding quote and change-order line items, GUID-backed file upload and file lifecycle commands,
+managing project and change-order payment schedules, creating project invoices, updating
+invoice/payment status, marking project item rows installed, running purchase-order lifecycle
+and direct-order commands, and updating service-call lifecycle states.
 See [Project workflow APIs](/api-reference/project-workflows) for sequencing, identifier
 rules, and deferred Registration notes.
 

@@ -1,6 +1,6 @@
 ---
 title: "Project workflow APIs"
-description: "How to use the v2 workflow endpoints for winning opportunities, adding line items, uploading files, managing payment schedules, creating invoices, purchase-order lifecycle commands, and marking project items installed."
+description: "How to use the v2 workflow endpoints for winning opportunities, adding line items, managing files, payment schedules, invoices, purchase-order lifecycle commands, service-call states, and installed item rows."
 ---
 
 The v2 platform now exposes the core quote-to-project workflows that previously required
@@ -21,8 +21,9 @@ services. v2 now puts the same operations behind governed bearer-token APIs:
 - Quote and project item writes call the same quote/project item manager paths the app uses.
 - Payment schedules and invoices use the existing project payment managers.
 - Install-status updates remain lifecycle commands, not generic field patches.
-- GUID-backed file uploads use the existing file upload manager after v2 entity resolution.
-- Purchase-order status, archive, and delete actions use the existing purchase-order workflow.
+- GUID-backed file uploads and file link/name/visibility/delete commands use the existing file manager after v2 entity resolution.
+- Purchase-order status, archive, delete, send/email, ADI direct-order, and Amazon direct-order actions use the existing purchase-order workflow.
+- Service-call state transitions use the existing ServiceApi manager so visit, payment, inventory, checklist, activity, and webhook side effects stay intact.
 - Registration, anonymous payment-session, and recipient checkout flows stay deferred.
 
 ## Workflow sequence
@@ -33,14 +34,20 @@ services. v2 now puts the same operations behind governed bearer-token APIs:
 | Add quote line items | `POST /api/v2/quotes/{id}/items` | `Quotes:Write` |
 | Add project items through a change order | `POST /api/v2/projects/{projectId}/change-orders/{changeOrderId}/items` | `Projects:Write` |
 | Upload a file to a supported entity | `POST /api/v2/files` | `Files:Write` |
+| Upload unattached file content | `POST /api/v2/files/unattached` | `Files:Write` |
+| Create or update a file link | `POST /api/v2/files/links`, `PUT /api/v2/files/{id}/link` | `Files:Write` |
+| Rename, show/hide, or delete a file | `PUT /api/v2/files/{id}/name`, `PUT /api/v2/files/{id}/field-user-visibility`, `DELETE /api/v2/files/{id}` | `Files:Write` |
 | Read or replace project payment schedules | `GET` / `PUT /api/v2/projects/{projectId}/payment-schedules` | `Projects:Read` / `Projects:Write` |
 | Read or replace change-order payment schedules | `GET` / `PUT /api/v2/projects/{projectId}/change-orders/{changeOrderId}/payment-schedules` | `Projects:Read` / `Projects:Write` |
 | List or create project invoices | `GET` / `POST /api/v2/projects/{projectId}/invoices` | `Projects:Read` / `Projects:Write` |
 | Update invoice/payment status | `PUT /api/v2/projects/{projectId}/invoices/{invoiceId}/status` | `Projects:Write` |
 | Mark project item rows installed | `PUT /api/v2/projects/{projectId}/items/install-status` | `Projects:Write` |
-| Update purchase-order status | `PUT /api/v2/purchase-orders/{id}/status` | `PurchaseOrders:Write` |
-| Archive or unarchive a purchase order | `PUT /api/v2/purchase-orders/{id}/archive` | `PurchaseOrders:Write` |
-| Delete a purchase order | `DELETE /api/v2/purchase-orders/{id}` | `PurchaseOrders:Write` |
+| Update purchase-order status | `PUT /api/v2/purchase-orders/{id}/status`, `PUT /api/v2/purchase-orders/status` | `PurchaseOrders:Write` |
+| Archive or unarchive purchase orders | `PUT /api/v2/purchase-orders/{id}/archive`, `PUT /api/v2/purchase-orders/archive` | `PurchaseOrders:Write` |
+| Delete purchase orders | `DELETE /api/v2/purchase-orders/{id}`, `POST /api/v2/purchase-orders/delete` | `PurchaseOrders:Write` |
+| Send purchase orders | `POST /api/v2/purchase-orders/{id}/send`, `POST /api/v2/purchase-orders/send` | `PurchaseOrders:Write` |
+| Submit direct-order workflow | `POST /api/v2/purchase-orders/{id}/adi-direct-order`, `POST /api/v2/purchase-orders/{id}/amazon-order` | `PurchaseOrders:Write` |
+| Update service-call lifecycle state | `PUT /api/v2/service-calls/{id}/state` | `ServiceCalls:Write` |
 
 <Note>
   All `POST` and `PUT` endpoints above accept the `Idempotency-Key` header. Use the same key
@@ -79,7 +86,7 @@ request body.
 Route IDs are public GUIDs. v2 resolves those GUIDs inside the authenticated tenant before
 calling the existing D-Tools workflow managers. This applies to opportunities, projects,
 quotes, change orders, clients, invoices/payments, payment terms, purchase orders, files,
-quote items, and project items.
+quote items, project items, and service calls.
 
 Some request-body fields still follow the generated endpoint schema for the existing manager
 contract. When a field is a public resource identity in v2, it is represented as a GUID. When
@@ -128,6 +135,39 @@ The response is the v2 public file detail shape. It uses the file public GUID, n
 integer file ID returned by the internal upload manager. Internal-ID-only child uploads,
 logo/special upload workflows, and recipient-token upload flows are not part of this v2
 bearer-token endpoint.
+
+### Manage file links and metadata
+
+```http
+POST /api/v2/files/unattached
+POST /api/v2/files/links
+PUT /api/v2/files/{id}/link
+PUT /api/v2/files/{id}/name
+PUT /api/v2/files/{id}/field-user-visibility
+DELETE /api/v2/files/{id}
+```
+
+`POST /api/v2/files/unattached` uploads tenant-scoped content and returns a URL without
+attaching the file to a CRM, project, quote, purchase-order, or service record. It is intended
+for rich text and embedded-image upload paths that previously used the internal generic
+`UploadFile` route.
+
+`POST /api/v2/files/links` creates a URL-backed file record on a supported public parent
+entity:
+
+```json
+{
+  "entityType": "project",
+  "entityId": "7a88f502-0d4d-4bd4-b195-f00c9c163dd3",
+  "url": "https://example.com/customer-approved-spec",
+  "type": "Manual"
+}
+```
+
+The update, rename, visibility, and delete commands use the public file GUID. v2 resolves the
+file to the tenant-scoped legacy file ID plus entity/object context, then calls the existing
+file manager. Link updates require a URL; rename requires a file name; visibility accepts
+`showInFieldUserView`.
 
 ### Win an opportunity
 
@@ -251,10 +291,12 @@ the status.
 
 ```http
 PUT /api/v2/purchase-orders/{id}/status
+PUT /api/v2/purchase-orders/status
 ```
 
 Updates a purchase order through the existing purchase-order lifecycle manager. The route
-`id` is the public purchase-order GUID. Supported status values are:
+`id` is the public purchase-order GUID. The batch route accepts an `ids` array of public
+purchase-order GUIDs. Supported status values are:
 
 | Status | Effect |
 | --- | --- |
@@ -274,6 +316,18 @@ The API also accepts common client spelling variants such as `draftCompleted`,
 }
 ```
 
+Batch status update:
+
+```json
+{
+  "ids": [
+    "9d6048f4-7a4a-423f-a30c-95b6f3e2488d",
+    "ec7d1478-1918-4469-a86f-9dd982e5f4c5"
+  ],
+  "status": "ordered"
+}
+```
+
 The response is a `V2OperationResponse` for the same purchase-order GUID. The manager keeps
 the existing permission checks and side effects.
 
@@ -281,6 +335,7 @@ the existing permission checks and side effects.
 
 ```http
 PUT /api/v2/purchase-orders/{id}/archive
+PUT /api/v2/purchase-orders/archive
 ```
 
 Sets the archived flag through the existing purchase-order archive workflow:
@@ -291,12 +346,14 @@ Sets the archived flag through the existing purchase-order archive workflow:
 }
 ```
 
-Use `false` to unarchive. The route `id` is the public purchase-order GUID.
+Use `false` to unarchive. The single route uses the public purchase-order GUID. The batch route
+accepts the same `archive` value plus an `ids` array.
 
 ### Delete a purchase order
 
 ```http
 DELETE /api/v2/purchase-orders/{id}
+POST /api/v2/purchase-orders/delete
 ```
 
 Deletes a purchase order using the existing OrderApi v1 manager path. Deletion can affect
@@ -304,20 +361,111 @@ purchase-order project items, addresses, files, activities, notifications, integ
 events, and inventory state through the downstream manager. v2 only resolves the public GUID,
 checks the platform policy, and calls the legacy workflow.
 
+The batch route uses `POST` so clients can send a command body without relying on a DELETE
+request body:
+
+```json
+{
+  "ids": [
+    "9d6048f4-7a4a-423f-a30c-95b6f3e2488d",
+    "ec7d1478-1918-4469-a86f-9dd982e5f4c5"
+  ]
+}
+```
+
+### Send and direct-order purchase orders
+
+```http
+POST /api/v2/purchase-orders/{id}/send
+POST /api/v2/purchase-orders/send
+POST /api/v2/purchase-orders/{id}/adi-direct-order
+POST /api/v2/purchase-orders/{id}/amazon-order
+```
+
+Send/email endpoints call the legacy supplier email workflow. The workflow may create
+recipient-token links as an email side effect, but anonymous recipient-token read/report paths
+remain outside the bearer-auth v2 API.
+
+Single send request:
+
+```json
+{
+  "sendCopyToUser": true
+}
+```
+
+Batch send request:
+
+```json
+{
+  "ids": [
+    "9d6048f4-7a4a-423f-a30c-95b6f3e2488d",
+    "ec7d1478-1918-4469-a86f-9dd982e5f4c5"
+  ],
+  "sendCopyToUser": true
+}
+```
+
+ADI direct-order delegates to the ADI purchase-order file workflow, including ADI supplier
+validation, address validation, file generation/upload, and ordered-state transition. Amazon
+direct-order delegates to the Amazon Business workflow, including integration connection
+validation, Amazon payload creation, ordered-state transition, and webhook publication.
+
+Purchase-order create and batch-create remain deferred. The legacy create workflows require
+supplier row IDs, and supplier rows do not yet have stable public GUIDs. v2 should not expose
+legacy supplier integers or treat nullable supplier DTIN as a row identity.
+
+### Update service-call lifecycle state
+
+```http
+PUT /api/v2/service-calls/{id}/state
+```
+
+Updates a service-call lifecycle state through the same manager used by Angular's internal
+ServiceApi state actions. The route `id` is the public service-call GUID. Supported states are:
+
+| State | Effect |
+| --- | --- |
+| `awaiting_parts` | Mark the service call awaiting parts. |
+| `parts_ordered` | Mark parts ordered. |
+| `parts_received` | Mark parts received. |
+| `in_progress` | Mark the service call in progress. |
+| `ready_for_invoice` | Mark the service call ready for invoice/payment request. |
+| `invoice_sent` | Mark the invoice/payment request sent. |
+| `on_hold` | Put the service call on hold. |
+| `canceled` | Cancel the service call. |
+| `completed` | Complete the service call. |
+
+```json
+{
+  "state": "ready_for_invoice"
+}
+```
+
+The API also accepts common client aliases such as `ready_for_payment_request`,
+`payment_requested`, camel-case state names, and `cancelled`. It does not accept tenant-local
+custom service-call status IDs. Those require a future public status catalog before v2 can
+avoid exposing internal integer IDs.
+
+The downstream manager owns the side effects: schedule cleanup, payment status resets,
+inventory release, checklist completion/reset, service-call activity creation, price updates,
+and completion/cancellation webhooks.
+
 ## Manager behavior
 
 These endpoints are v2 controllers over the existing workflow managers. They do not implement
 parallel business logic. Existing manager permissions, locked-change-order checks, inventory
 guards, project payment term side effects, invoice status rules, activities, notifications,
-file-upload rules, purchase-order side effects, and webhooks still run downstream.
+file-upload rules, purchase-order side effects, service-call state side effects, and webhooks
+still run downstream.
 
 Direct approved-project item add is intentionally not exposed. Add items to approved projects
 through a change order so the same locked-state and inventory behavior used by the D-Tools app
 is preserved.
 
-Purchase-order create, supplier ordering, send/email, Amazon direct-order, and batch-create
-workflows remain planned separately because they introduce more supplier, item, external-send,
-and marketplace side effects than the existing status/archive/delete commands.
+Purchase-order create, supplier ordering discovery, purchase-order item writes, and
+batch-create workflows remain planned separately because supplier rows do not yet have public
+GUIDs and several payloads still contain project-item/catalog-item/supplier integer IDs.
 
 ## Error handling
 
