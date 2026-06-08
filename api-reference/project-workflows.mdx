@@ -1,0 +1,58 @@
+---
+title: "Project workflow APIs"
+description: "How to use the v2 workflow endpoints for winning opportunities, adding line items, managing payment schedules, creating invoices, and marking project items installed."
+---
+
+The v2 platform now exposes the core quote-to-project workflows that previously required
+public v1 or Angular/internal v1 calls. These endpoints keep the v2 platform model:
+bearer authentication, account-scoped `PlatformContext`, public GUID route IDs, release
+governance metadata, usage recording, standard error envelopes, and idempotency support for
+write calls.
+
+## Workflow sequence
+
+| Step | Endpoint | Policy |
+| --- | --- | --- |
+| Win an opportunity and create its project | `POST /api/v2/opportunities/{id}/win` | `Opportunities:Write` |
+| Add quote line items | `POST /api/v2/quotes/{id}/items` | `Quotes:Write` |
+| Add project items through a change order | `POST /api/v2/projects/{projectId}/change-orders/{changeOrderId}/items` | `Projects:Write` |
+| Read or replace project payment schedules | `GET` / `PUT /api/v2/projects/{projectId}/payment-schedules` | `Projects:Read` / `Projects:Write` |
+| Read or replace change-order payment schedules | `GET` / `PUT /api/v2/projects/{projectId}/change-orders/{changeOrderId}/payment-schedules` | `Projects:Read` / `Projects:Write` |
+| List or create project invoices | `GET` / `POST /api/v2/projects/{projectId}/invoices` | `Projects:Read` / `Projects:Write` |
+| Update invoice/payment status | `PUT /api/v2/projects/{projectId}/invoices/{invoiceId}/status` | `Projects:Write` |
+| Mark project item rows installed | `PUT /api/v2/projects/{projectId}/items/install-status` | `Projects:Write` |
+
+<Note>
+  All `POST` and `PUT` endpoints above accept the `Idempotency-Key` header. Use the same key
+  when retrying after a timeout or network failure so the platform can replay the prior result
+  instead of executing the workflow twice.
+</Note>
+
+## Identifiers
+
+Route IDs are public GUIDs. v2 resolves those GUIDs inside the authenticated tenant before
+calling the existing D-Tools workflow managers. This applies to opportunities, projects,
+quotes, change orders, clients, invoices/payments, payment terms, quote items, and project
+items.
+
+Install statuses are different: they are selected by status/state name rather than public
+GUID because the current install-status catalog is state/name based. Partial install means
+passing only the project item row GUIDs that should be marked installed. Quantity-level
+partial install requires splitting quantities first, then updating the subset of item rows.
+
+## Manager behavior
+
+These endpoints are v2 controllers over the existing workflow managers. They do not implement
+parallel business logic. Existing manager permissions, locked-change-order checks, inventory
+guards, project payment term side effects, invoice status rules, activities, notifications,
+and webhooks still run downstream.
+
+Direct approved-project item add is intentionally not exposed. Add items to approved projects
+through a change order so the same locked-state and inventory behavior used by the D-Tools app
+is preserved.
+
+## Registration
+
+Registration, anonymous payment-session, and recipient checkout workflows are deferred from
+this parity phase. They remain outside the normal bearer-token v2 surface until their auth and
+recipient-token model is split from the standard platform API.
