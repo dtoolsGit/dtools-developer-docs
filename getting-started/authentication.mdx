@@ -42,37 +42,68 @@ environment variable:
 DTCLOUD_ACCESS_TOKEN="<token>" dtcloud me --output json
 ```
 
-### Option 2: Programmatic OAuth (service clients and server-side apps)
+### Option 2: DirectAPI OAuth for human users
 
-Programmatic clients — server-side apps, CI pipelines, or integrations — obtain tokens
-directly from the Entra CIAM authority using the OAuth 2.0 authorization code or
-client-credentials flow. The required scope is:
+Human users can request and refresh v2 access tokens without the `dtcloud` binary. Use a
+D-Tools registered **public client** that is mapped to the `DirectApi` channel, then call
+the Entra External ID OAuth endpoints directly. The access token still represents the
+signed-in user, not a service account.
 
-```
-api://<ext-client-id>/access_as_user
-```
+Use the environment-specific values from D-Tools:
 
-_(verify this: the exact `ext-client-id` value is environment-specific and must be
-confirmed with the D-Tools Cloud team before publishing)_
+| Value | Purpose | Demo value |
+| --- | --- | --- |
+| `tenant_id` | External ID tenant id | `3106dd95-f1fe-4297-adbc-6fb8a41061df` |
+| `authority` | CIAM authority | `https://3106dd95-f1fe-4297-adbc-6fb8a41061df.ciamlogin.com/3106dd95-f1fe-4297-adbc-6fb8a41061df` |
+| `client_id` | DirectAPI public-client app id | `93fb022f-ef76-4e2e-9aef-9c7c2ed9e473` |
+| `scope` | v2 delegated API scope | `api://9dcfc8b8-6794-4562-bc81-d3da85ff5851/access_as_user` |
+| `base_url` | v2 API base URL | `https://demoapi.d-tools.cloud/api/v2` |
 
-Configure your OAuth client to:
-
-- **Authority:** the Entra External ID CIAM authority for the environment
-  (`https://<tenant-id>.ciamlogin.com` _(verify this)_).
-- **Scope:** `api://<ext-client-id>/access_as_user` _(verify this)_.
-- **Client-id:** your application's registered client ID _(verify this: obtain from the
-  D-Tools Cloud team)_.
-
-The CLI's `profile set` command shows the shape of a programmatic profile:
+Start device-code sign-in:
 
 ```bash
-dtcloud profile set staging \
-  --base-url https://stgapi.d-tools.cloud \
-  --authority https://example.ciamlogin.com/<tenant-id> \
-  --client-id <public-client-id> \
-  --scope api://<api-client-id>/access_as_user \
-  --default
+TENANT_ID="3106dd95-f1fe-4297-adbc-6fb8a41061df"
+CLIENT_ID="93fb022f-ef76-4e2e-9aef-9c7c2ed9e473"
+SCOPE="api://9dcfc8b8-6794-4562-bc81-d3da85ff5851/access_as_user"
+AUTHORITY="https://${TENANT_ID}.ciamlogin.com/${TENANT_ID}"
+
+curl -sS -X POST "${AUTHORITY}/oauth2/v2.0/devicecode" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "client_id=${CLIENT_ID}" \
+  --data-urlencode "scope=${SCOPE} offline_access openid profile"
 ```
+
+The response includes a `verification_uri`, `user_code`, and `device_code`. Show the
+verification URI and user code to the user, then poll for tokens after sign-in:
+
+```bash
+curl -sS -X POST "${AUTHORITY}/oauth2/v2.0/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=urn:ietf:params:oauth:grant-type:device_code" \
+  --data-urlencode "client_id=${CLIENT_ID}" \
+  --data-urlencode "device_code=<device_code from the first response>"
+```
+
+Persist the returned `refresh_token` securely. Use it to get a new access token:
+
+```bash
+curl -sS -X POST "${AUTHORITY}/oauth2/v2.0/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=refresh_token" \
+  --data-urlencode "client_id=${CLIENT_ID}" \
+  --data-urlencode "refresh_token=<refresh_token>" \
+  --data-urlencode "scope=${SCOPE}"
+```
+
+Send the returned `access_token` to the v2 API as a bearer token. If the user belongs to
+more than one account, also send `X-DTools-AccountId`.
+
+### Option 3: Service-principal OAuth for automation
+
+Unattended server-side jobs, CI pipelines, and integrations should use a D-Tools registered
+service principal and the OAuth 2.0 client-credentials flow. Do not use a human user's
+refresh token for unattended automation. The exact authority, client ID, client secret or
+federated credential, and app role assignment are issued by D-Tools for each environment.
 
 ## How to send the token
 
