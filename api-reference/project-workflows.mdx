@@ -1,6 +1,6 @@
 ---
 title: "Project workflow APIs"
-description: "How to use the v2 workflow endpoints for winning opportunities, adding line items, uploading files, managing payment schedules, creating invoices, purchase-order lifecycle commands, and marking project items installed."
+description: "How to use the v2 workflow endpoints for winning opportunities, managing opportunity addresses, adding line items, catalog reference reads, files, payment schedules, invoices, purchase orders, service calls, service contracts, and installed item rows."
 ---
 
 The v2 platform now exposes the core quote-to-project workflows that previously required
@@ -18,11 +18,16 @@ Historically, these workflows were split across public CloudApi v1 and Angular/i
 services. v2 now puts the same operations behind governed bearer-token APIs:
 
 - Opportunity win creates the project through the existing opportunity/project workflow.
+- Opportunity billing and site addresses use the same address save workflow, tax refresh, and activity side effects as the app.
 - Quote and project item writes call the same quote/project item manager paths the app uses.
 - Payment schedules and invoices use the existing project payment managers.
 - Install-status updates remain lifecycle commands, not generic field patches.
-- GUID-backed file uploads use the existing file upload manager after v2 entity resolution.
-- Purchase-order status, archive, and delete actions use the existing purchase-order workflow.
+- Catalog brand, category, supplier, setup, tax, pricing, and new-product reference reads use the existing CatalogApi v1 managers while omitting legacy row IDs.
+- GUID-backed file uploads, parent-scoped project/quote location and system uploads, project/service-call invoice uploads, project subscription uploads, proposal uploads, and file link/name/visibility/delete commands use the existing file manager after v2 entity resolution.
+- Catalog item images and tenant company logo commands use the existing upload/company managers without accepting internal item or account IDs.
+- Purchase-order totals, status summaries, estimates, shipment tracking URLs, create, status, archive, delete, send/email, ADI direct-order, Amazon direct-order, and catalog-cost application actions use the existing purchase-order workflow.
+- Service-call address reads/writes and state transitions use the existing ServiceApi manager so tax, visit, payment, inventory, checklist, activity, and webhook side effects stay intact.
+- Service-contract aggregates, lifecycle commands, payment schedules, invoices, invoice email, and invoice file upload use the existing ServiceApi v1 paths.
 - Registration, anonymous payment-session, and recipient checkout flows stay deferred.
 
 ## Workflow sequence
@@ -30,24 +35,47 @@ services. v2 now puts the same operations behind governed bearer-token APIs:
 | Step | Endpoint | Policy |
 | --- | --- | --- |
 | Win an opportunity and create its project | `POST /api/v2/opportunities/{id}/win` | `Opportunities:Write` |
+| Read opportunity addresses | `GET /api/v2/opportunities/{id}/addresses`, `GET /api/v2/opportunities/{id}/addresses/billing`, `GET /api/v2/opportunities/{id}/addresses/site` | `Opportunities:Read` |
+| Update opportunity billing or site address | `PUT /api/v2/opportunities/{id}/addresses/billing`, `PUT /api/v2/opportunities/{id}/addresses/site` | `Opportunities:Write` |
 | Add quote line items | `POST /api/v2/quotes/{id}/items` | `Quotes:Write` |
 | Add project items through a change order | `POST /api/v2/projects/{projectId}/change-orders/{changeOrderId}/items` | `Projects:Write` |
+| Read catalog reference data | `GET /api/v2/catalog/brands`, `/brands/new`, `/brands/{brandDtin}`, `/brands/{brandDtin}/suppliers`, `/brands/{brandDtin}/new-products`, `/categories`, `/categories/icons`, `/setup/structure`, `/tax-settings`, `/taxes`, `/pricing-options`, `/suppliers`, `/suppliers/dtins`, `/suppliers/{supplierDtin}`, `/suppliers/{supplierDtin}/exists`, `/suppliers/{supplierDtin}/new-products` | `Catalog:Read` |
+| Resolve catalog product DTINs | `POST /api/v2/catalog/products/resolve-dtins` | `Catalog:Read` |
 | Upload a file to a supported entity | `POST /api/v2/files` | `Files:Write` |
+| Upload catalog item image or manage company logo | `POST /api/v2/catalog/items/{itemId}/images`, `POST /api/v2/company/logo`, `DELETE /api/v2/company/logo` | `Files:Write` |
+| Upload a file to a project or quote location/system | `POST /api/v2/projects/{projectId}/locations/{locationId}/files`, `POST /api/v2/projects/{projectId}/systems/{systemId}/files`, `POST /api/v2/quotes/{quoteId}/locations/{locationId}/files`, `POST /api/v2/quotes/{quoteId}/systems/{systemId}/files` | `Files:Write` |
+| Upload a file to an invoice or project subscription | `POST /api/v2/projects/{projectId}/invoices/{invoiceId}/files`, `POST /api/v2/service-calls/{serviceCallId}/invoices/{invoiceId}/files`, `POST /api/v2/service-contracts/{serviceContractId}/invoices/{invoiceId}/files`, `POST /api/v2/projects/{projectId}/subscriptions/{subscriptionId}/files` | `Files:Write` |
+| Upload an internal proposal file | `POST /api/v2/quotes/{quoteId}/proposal/files`, `POST /api/v2/projects/{projectId}/proposal/files`, `POST /api/v2/projects/{projectId}/change-orders/{changeOrderId}/proposal/files` | `Files:Write` |
+| Upload unattached file content | `POST /api/v2/files/unattached` | `Files:Write` |
+| Create or update a file link | `POST /api/v2/files/links`, `PUT /api/v2/files/{id}/link` | `Files:Write` |
+| Rename, show/hide, or delete a file | `PUT /api/v2/files/{id}/name`, `PUT /api/v2/files/{id}/field-user-visibility`, `DELETE /api/v2/files/{id}` | `Files:Write` |
 | Read or replace project payment schedules | `GET` / `PUT /api/v2/projects/{projectId}/payment-schedules` | `Projects:Read` / `Projects:Write` |
 | Read or replace change-order payment schedules | `GET` / `PUT /api/v2/projects/{projectId}/change-orders/{changeOrderId}/payment-schedules` | `Projects:Read` / `Projects:Write` |
 | List or create project invoices | `GET` / `POST /api/v2/projects/{projectId}/invoices` | `Projects:Read` / `Projects:Write` |
 | Update invoice/payment status | `PUT /api/v2/projects/{projectId}/invoices/{invoiceId}/status` | `Projects:Write` |
 | Mark project item rows installed | `PUT /api/v2/projects/{projectId}/items/install-status` | `Projects:Write` |
-| Update purchase-order status | `PUT /api/v2/purchase-orders/{id}/status` | `PurchaseOrders:Write` |
-| Archive or unarchive a purchase order | `PUT /api/v2/purchase-orders/{id}/archive` | `PurchaseOrders:Write` |
-| Delete a purchase order | `DELETE /api/v2/purchase-orders/{id}` | `PurchaseOrders:Write` |
+| Read purchase-order dashboard data | `GET /api/v2/purchase-orders/totals`, `POST /api/v2/purchase-orders/state-summaries`, `POST /api/v2/purchase-orders/estimate`, `GET /api/v2/purchase-orders/{id}/shipment-tracking-url` | `PurchaseOrders:Read` |
+| Create purchase orders | `POST /api/v2/purchase-orders` | `PurchaseOrders:Write` |
+| Update purchase-order status | `PUT /api/v2/purchase-orders/{id}/status`, `PUT /api/v2/purchase-orders/status` | `PurchaseOrders:Write` |
+| Archive or unarchive purchase orders | `PUT /api/v2/purchase-orders/{id}/archive`, `PUT /api/v2/purchase-orders/archive` | `PurchaseOrders:Write` |
+| Delete purchase orders | `DELETE /api/v2/purchase-orders/{id}`, `POST /api/v2/purchase-orders/delete` | `PurchaseOrders:Write` |
+| Send purchase orders | `POST /api/v2/purchase-orders/{id}/send`, `POST /api/v2/purchase-orders/send` | `PurchaseOrders:Write` |
+| Submit direct-order workflow | `POST /api/v2/purchase-orders/{id}/adi-direct-order`, `POST /api/v2/purchase-orders/{id}/amazon-order`, `POST /api/v2/purchase-orders/amazon-order` | `PurchaseOrders:Write` |
+| Apply catalog costs to purchase-order items | `POST /api/v2/purchase-orders/{id}/items/apply-catalog-costs` | `PurchaseOrders:Write` |
+| Read or update service-call addresses | `GET /api/v2/service-calls/{id}/addresses`, `GET` / `PUT /api/v2/service-calls/{id}/addresses/billing`, `GET` / `PUT /api/v2/service-calls/{id}/addresses/site` | `ServiceCalls:Read` / `ServiceCalls:Write` |
+| Update service-call lifecycle state | `PUT /api/v2/service-calls/{id}/state` | `ServiceCalls:Write` |
+| Read service-contract aggregates | `POST /api/v2/service-contracts/status-summary`, `POST /api/v2/service-contracts/expiring-count` | `ServiceContracts:Read` |
+| Update service-contract lifecycle fields | `PUT /api/v2/service-contracts/{id}/estimated-start-date`, `POST /api/v2/service-contracts/{id}/cancel`, `POST /api/v2/service-contracts/{id}/open`, `DELETE /api/v2/service-contracts/{id}`, `DELETE /api/v2/service-contracts/{id}/terms-and-conditions` | `ServiceContracts:Write` |
+| Read or replace service-contract payment schedules | `GET` / `PUT /api/v2/service-contracts/{id}/payment-schedules` | `ServiceContracts:Read` / `ServiceContracts:Write` |
+| List or send service-contract invoices | `GET /api/v2/service-contracts/{id}/invoices`, `POST /api/v2/service-contracts/{id}/invoices/send` | `ServiceContracts:Read` / `ServiceContracts:Write` |
 
 <Note>
   All `POST` and `PUT` endpoints above accept the `Idempotency-Key` header. Use the same key
   when retrying after a timeout or network failure so the platform can replay the prior result
   instead of executing the workflow twice. `DELETE /api/v2/purchase-orders/{id}` is a lifecycle
   command with manager-owned side effects; do not retry it blindly after an ambiguous network
-  failure unless you first re-read the purchase order.
+  failure unless you first re-read the purchase order. The same caution applies to service
+  contract delete commands.
 </Note>
 
 ## Before you call
@@ -78,8 +106,14 @@ request body.
 
 Route IDs are public GUIDs. v2 resolves those GUIDs inside the authenticated tenant before
 calling the existing D-Tools workflow managers. This applies to opportunities, projects,
-quotes, change orders, clients, invoices/payments, payment terms, purchase orders, files,
-quote items, and project items.
+quotes, change orders, project and quote locations/systems, clients, invoices/payments,
+payment terms, purchase orders, files, quote items, project items, service calls, service
+contracts, service-contract payment terms, and service-contract invoices.
+
+Opportunity billing and site addresses are singleton child resources. They are addressed by
+their parent opportunity GUID plus the fixed `billing` or `site` route segment because the
+legacy address rows do not have public GUIDs. Address delete by legacy row ID remains
+deferred until a public address identity or explicit delete command is available.
 
 Some request-body fields still follow the generated endpoint schema for the existing manager
 contract. When a field is a public resource identity in v2, it is represented as a GUID. When
@@ -94,6 +128,54 @@ partial install requires splitting quantities first, then updating the subset of
 
 ## Endpoint details
 
+### Read catalog reference data
+
+```http
+GET /api/v2/catalog/brands
+GET /api/v2/catalog/brands/new
+GET /api/v2/catalog/brands/{brandDtin}
+GET /api/v2/catalog/brands/{brandDtin}/suppliers
+GET /api/v2/catalog/brands/{brandDtin}/new-products
+GET /api/v2/catalog/categories
+GET /api/v2/catalog/categories/icons
+GET /api/v2/catalog/setup/structure
+GET /api/v2/catalog/tax-settings
+GET /api/v2/catalog/taxes
+GET /api/v2/catalog/pricing-options
+GET /api/v2/catalog/suppliers
+GET /api/v2/catalog/suppliers/dtins
+GET /api/v2/catalog/suppliers/{supplierDtin}
+GET /api/v2/catalog/suppliers/{supplierDtin}/exists
+GET /api/v2/catalog/suppliers/{supplierDtin}/new-products
+POST /api/v2/catalog/products/resolve-dtins
+```
+
+These endpoints expose the CatalogApi v1 reference data that Angular previously read
+through internal/private API calls. They are read-only in this phase. Brand, supplier,
+category, product, parent-category, and new-product identifiers are public DTINs where
+the legacy data has a DTIN. Legacy row IDs such as brand ID, supplier ID, category ID,
+tax ID, adjustment ID, item-discount ID, length rule ID, and parent row ID are not
+returned.
+
+Catalog categories return parent DTINs when the parent category has one. Tax settings
+translate configured product and labor tax row IDs into tax names. Group taxes return
+child tax names and rates rather than child row IDs. `POST /catalog/products/resolve-dtins`
+accepts a list of product DTINs and returns the subset present in the tenant catalog:
+
+```json
+{
+  "dtins": [
+    "88f782df-f23a-4c2f-92cd-771d2b2996c1",
+    "8d124f9f-4e77-49ea-99c1-6a60fd2c1228"
+  ]
+}
+```
+
+Use these endpoints as supporting catalogs for quote/project item creation, purchase-order
+estimates, and UI setup selectors. Catalog setup writes, generic FieldValue patch paths,
+inventory writes, and long-tail tenant lookup-table administration remain separate parity
+targets until each workflow has an explicit v2 command contract.
+
 ### Upload a file
 
 ```http
@@ -106,7 +188,7 @@ public GUID inside the authenticated tenant. The multipart form fields are:
 
 | Field | Required | Description |
 | --- | --- | --- |
-| `entityType` | Yes | Supported values: `client`, `opportunity`, `project`, `quote`, `product`, `purchase-order`, `service-call`, `service-contract`. |
+| `entityType` | Yes | Supported values: `client`, `opportunity`, `project`, `quote`, `product`, `subscription`, `purchase-order`, `service-call`, `service-contract`. |
 | `entityId` | Yes | Public GUID for the target entity. |
 | `type` | No | Optional legacy file type/category string. |
 | `file` | Yes | Binary file part. |
@@ -125,9 +207,170 @@ curl -X POST "https://dtoolsdevapi.azure-api.net/api/v2/files" \
 ```
 
 The response is the v2 public file detail shape. It uses the file public GUID, not the legacy
-integer file ID returned by the internal upload manager. Internal-ID-only child uploads,
-logo/special upload workflows, and recipient-token upload flows are not part of this v2
-bearer-token endpoint.
+integer file ID returned by the internal upload manager. Use this endpoint for root-level
+entity attachments.
+
+### Upload catalog images and company logos
+
+```http
+POST /api/v2/catalog/items/{itemId}/images
+POST /api/v2/company/logo
+DELETE /api/v2/company/logo
+Content-Type: multipart/form-data
+```
+
+`POST /catalog/items/{itemId}/images` uploads an image to a catalog item after resolving
+the public item GUID to the tenant-scoped catalog row. The image part must be named
+`image`; optional form fields are `typeId` and `order`, matching the legacy image upload
+contract. The response returns public image URL metadata and suppresses the legacy
+item-image row ID:
+
+```bash
+curl -X POST "https://dtoolsdevapi.azure-api.net/api/v2/catalog/items/88f782df-f23a-4c2f-92cd-771d2b2996c1/images" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-DTools-AccountId: $ACCOUNT_ID" \
+  -H "Idempotency-Key: catalog-item-image-20260609-001" \
+  -F "typeId=1" \
+  -F "order=0" \
+  -F "image=@./front.jpg"
+```
+
+`POST /company/logo` and `DELETE /company/logo` are singleton tenant commands. They do
+not accept an account ID in the route or body; v2 derives the tenant from `PlatformContext`
+and delegates to the existing company logo manager. The upload part must be named `logo`,
+and the upload response returns the logo URL.
+
+### Upload location and system files
+
+```http
+POST /api/v2/projects/{projectId}/locations/{locationId}/files
+POST /api/v2/projects/{projectId}/systems/{systemId}/files
+POST /api/v2/quotes/{quoteId}/locations/{locationId}/files
+POST /api/v2/quotes/{quoteId}/systems/{systemId}/files
+Content-Type: multipart/form-data
+```
+
+These routes cover the Angular/internal v1 project and quote location/system upload
+workflows without exposing legacy child row IDs. v2 resolves the public project or quote GUID
+first, then resolves the public location or system GUID inside that parent. A location/system
+GUID that belongs to a different parent returns `404`.
+
+The multipart form fields are:
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `type` | No | Optional legacy file type/category string. |
+| `file` | Yes | Binary file part. |
+
+Example:
+
+```bash
+curl -X POST "https://dtoolsdevapi.azure-api.net/api/v2/projects/7a88f502-0d4d-4bd4-b195-f00c9c163dd3/locations/3c6de30c-19d5-44f1-b32f-4e0e0f13f8ec/files" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-DTools-AccountId: $ACCOUNT_ID" \
+  -H "Idempotency-Key: project-location-file-20260608-001" \
+  -F "type=Document" \
+  -F "file=@./rack-elevation.pdf"
+```
+
+Use the scoped upload routes below for invoice, project-subscription, and proposal files.
+
+### Upload invoice, subscription, and proposal files
+
+```http
+POST /api/v2/projects/{projectId}/invoices/{invoiceId}/files
+POST /api/v2/service-calls/{serviceCallId}/invoices/{invoiceId}/files
+POST /api/v2/service-contracts/{serviceContractId}/invoices/{invoiceId}/files
+POST /api/v2/projects/{projectId}/subscriptions/{subscriptionId}/files
+POST /api/v2/quotes/{quoteId}/proposal/files
+POST /api/v2/projects/{projectId}/proposal/files
+POST /api/v2/projects/{projectId}/change-orders/{changeOrderId}/proposal/files
+Content-Type: multipart/form-data
+```
+
+These routes cover additional Angular/internal v1 upload workflows without exposing legacy
+payment, project-subscription, or proposal row IDs. v2 resolves the public parent GUID first,
+then resolves the child resource inside that parent:
+
+| Route family | Parent resolution | Child resolution | Response |
+| --- | --- | --- | --- |
+| Project invoice files | `projectId` public project GUID | `invoiceId` public payment GUID linked to the project payment terms | Public v2 file detail |
+| Service-call invoice files | `serviceCallId` public service-call GUID | `invoiceId` public payment GUID linked to the service call | Public v2 file detail |
+| Service-contract invoice files | `serviceContractId` public service-contract GUID | `invoiceId` public payment GUID linked to the service contract | Public v2 file detail |
+| Project subscription files | `projectId` public project GUID | `subscriptionId` public project-subscription GUID under the project | Public v2 file detail |
+| Proposal files | Quote, project, or project/change-order public GUIDs | Internal proposal row resolved from the parent | Legacy proposal file detail |
+
+Invoice upload routes preserve the v1 `ManagePayments` permission check inside the legacy
+file-upload facade. Generic catalog subscription uploads through `POST /api/v2/files` with
+`entityType=subscription` preserve the v1 `EditCatalogItem` check. Proposal uploads preserve
+the v1 `Internal = true` file behavior, so their response is the legacy proposal file detail
+instead of the public v2 file detail; internal proposal file rows are not returned by public
+file reads.
+
+Multipart fields:
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `type` | No | Optional legacy file type/category string for invoice and project-subscription uploads. Proposal uploads ignore this value. |
+| `file` | Yes | Binary file part. |
+
+Example project invoice upload:
+
+```bash
+curl -X POST "https://dtoolsdevapi.azure-api.net/api/v2/projects/7a88f502-0d4d-4bd4-b195-f00c9c163dd3/invoices/af56978f-1263-432b-993f-fac6a6f27db9/files" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-DTools-AccountId: $ACCOUNT_ID" \
+  -H "Idempotency-Key: project-invoice-file-20260608-001" \
+  -F "type=InvoiceAttachment" \
+  -F "file=@./customer-po.pdf"
+```
+
+Example proposal upload:
+
+```bash
+curl -X POST "https://dtoolsdevapi.azure-api.net/api/v2/projects/7a88f502-0d4d-4bd4-b195-f00c9c163dd3/change-orders/5f1c77aa-bafa-41d8-a552-5f67432519c0/proposal/files" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-DTools-AccountId: $ACCOUNT_ID" \
+  -H "Idempotency-Key: change-order-proposal-file-20260608-001" \
+  -F "file=@./proposal-cover.png"
+```
+
+Drawing, task, service-plan, special upload workflows, and recipient-token upload flows
+remain separate parity targets because those v1 paths still use internal child IDs,
+domain-specific URL contracts, or anonymous-token semantics.
+
+### Manage file links and metadata
+
+```http
+POST /api/v2/files/unattached
+POST /api/v2/files/links
+PUT /api/v2/files/{id}/link
+PUT /api/v2/files/{id}/name
+PUT /api/v2/files/{id}/field-user-visibility
+DELETE /api/v2/files/{id}
+```
+
+`POST /api/v2/files/unattached` uploads tenant-scoped content and returns a URL without
+attaching the file to a CRM, project, quote, purchase-order, or service record. It is intended
+for rich text and embedded-image upload paths that previously used the internal generic
+`UploadFile` route.
+
+`POST /api/v2/files/links` creates a URL-backed file record on a supported public parent
+entity:
+
+```json
+{
+  "entityType": "project",
+  "entityId": "7a88f502-0d4d-4bd4-b195-f00c9c163dd3",
+  "url": "https://example.com/customer-approved-spec",
+  "type": "Manual"
+}
+```
+
+The update, rename, visibility, and delete commands use the public file GUID. v2 resolves the
+file to the tenant-scoped legacy file ID plus entity/object context, then calls the existing
+file manager. Link updates require a URL; rename requires a file name; visibility accepts
+`showInFieldUserView`.
 
 ### Win an opportunity
 
@@ -149,6 +392,42 @@ GUID. The body supplies the accepted quote GUID:
 The response is a `V2IdResponse` whose `id` is the created project GUID. The existing workflow
 handles quote acceptance, project creation, project payment/invoice side effects, activities,
 notifications, and webhooks.
+
+### Manage opportunity addresses
+
+```http
+GET /api/v2/opportunities/{id}/addresses
+GET /api/v2/opportunities/{id}/addresses/billing
+PUT /api/v2/opportunities/{id}/addresses/billing
+GET /api/v2/opportunities/{id}/addresses/site
+PUT /api/v2/opportunities/{id}/addresses/site
+```
+
+These routes expose the Angular/internal v1 opportunity billing and site address workflow
+without exposing the legacy address row ID. The route `id` is the public opportunity GUID. v2
+resolves that GUID inside the authenticated tenant, then calls the existing address manager
+with the legacy project/opportunity entity context.
+
+`GET /addresses` returns the opportunity's address details. The singleton `billing` and
+`site` reads return the corresponding address detail. The `PUT` routes accept the existing
+address DTO shape:
+
+```json
+{
+  "street1": "123 Main St",
+  "street2": "Suite 400",
+  "city": "Austin",
+  "state": "TX",
+  "postalCode": "78701",
+  "country": "US"
+}
+```
+
+Saving an address delegates to `AddressManager.SaveAddress`, queues the existing quote-tax
+refresh, and creates the same billing/site opportunity activity used by the application. The
+tax refresh is asynchronous, so clients should treat the address save response as confirmation
+that the address was saved and the tax update was queued, not that quote taxes have already
+finished recalculating.
 
 ### Add quote line items
 
@@ -247,14 +526,100 @@ Use `installStatus` when you know the tenant status name. `installState` is an o
 fallback state name. Partial install is row-based: pass only the item rows that should receive
 the status.
 
+### Read purchase-order dashboard data
+
+```http
+GET /api/v2/purchase-orders/totals?ids={purchaseOrderId}
+POST /api/v2/purchase-orders/state-summaries
+POST /api/v2/purchase-orders/estimate
+GET /api/v2/purchase-orders/{id}/shipment-tracking-url
+```
+
+These endpoints expose OrderApi v1 purchase-order helper workflows without returning
+legacy purchase-order row IDs. `totals` accepts one or more public purchase-order GUIDs
+as repeated `ids` query values and returns supplier/price totals. `state-summaries`
+accepts a date range and returns counts and totals grouped by lifecycle status name:
+
+```json
+{
+  "startDate": "2026-06-01T00:00:00Z",
+  "endDate": "2026-06-30T23:59:59Z"
+}
+```
+
+`estimate` calculates orderable product count and cost from public project GUIDs,
+project-item GUIDs, or catalog product GUIDs. Supplier grouping is derived by the
+legacy workflow; v2 does not accept supplier row IDs.
+
+```json
+{
+  "projectIds": [
+    "7a88f502-0d4d-4bd4-b195-f00c9c163dd3"
+  ],
+  "projectItems": [
+    {
+      "projectId": "7a88f502-0d4d-4bd4-b195-f00c9c163dd3",
+      "itemId": "e99ab7e1-55bb-4f55-a7e0-5190b19a6770",
+      "quantity": 2,
+      "unitPrice": 299.0
+    }
+  ],
+  "items": [
+    {
+      "productId": "88f782df-f23a-4c2f-92cd-771d2b2996c1",
+      "quantity": 1,
+      "unitPrice": 499.0
+    }
+  ],
+  "useCatalogCost": true
+}
+```
+
+Shipment tracking URL resolution can update the legacy purchase-order tracking URL cache
+as a manager-owned side effect.
+
+### Create purchase orders
+
+```http
+POST /api/v2/purchase-orders
+```
+
+Creates or appends draft purchase orders through the OrderApi v1 `CreatePurchaseOrders2`
+workflow. Source IDs are public GUIDs. Use `purchaseOrderIds` to append to existing draft
+purchase orders, `projectIds` to create from orderable project rows, `projectItems` to
+select specific project item rows, and `items` to create from catalog products.
+
+```json
+{
+  "purchaseOrderIds": [
+    "9d6048f4-7a4a-423f-a30c-95b6f3e2488d"
+  ],
+  "projectItems": [
+    {
+      "projectId": "7a88f502-0d4d-4bd4-b195-f00c9c163dd3",
+      "itemId": "e99ab7e1-55bb-4f55-a7e0-5190b19a6770",
+      "quantity": 2,
+      "unitPrice": 299.0
+    }
+  ],
+  "useCatalogCost": true
+}
+```
+
+The response returns the created or updated purchase-order public GUIDs, numbers,
+supplier names, product counts, and totals. Supplier-only create remains deferred because
+supplier rows do not yet have stable public GUIDs.
+
 ### Update purchase-order status
 
 ```http
 PUT /api/v2/purchase-orders/{id}/status
+PUT /api/v2/purchase-orders/status
 ```
 
 Updates a purchase order through the existing purchase-order lifecycle manager. The route
-`id` is the public purchase-order GUID. Supported status values are:
+`id` is the public purchase-order GUID. The batch route accepts an `ids` array of public
+purchase-order GUIDs. Supported status values are:
 
 | Status | Effect |
 | --- | --- |
@@ -274,6 +639,18 @@ The API also accepts common client spelling variants such as `draftCompleted`,
 }
 ```
 
+Batch status update:
+
+```json
+{
+  "ids": [
+    "9d6048f4-7a4a-423f-a30c-95b6f3e2488d",
+    "ec7d1478-1918-4469-a86f-9dd982e5f4c5"
+  ],
+  "status": "ordered"
+}
+```
+
 The response is a `V2OperationResponse` for the same purchase-order GUID. The manager keeps
 the existing permission checks and side effects.
 
@@ -281,6 +658,7 @@ the existing permission checks and side effects.
 
 ```http
 PUT /api/v2/purchase-orders/{id}/archive
+PUT /api/v2/purchase-orders/archive
 ```
 
 Sets the archived flag through the existing purchase-order archive workflow:
@@ -291,12 +669,14 @@ Sets the archived flag through the existing purchase-order archive workflow:
 }
 ```
 
-Use `false` to unarchive. The route `id` is the public purchase-order GUID.
+Use `false` to unarchive. The single route uses the public purchase-order GUID. The batch route
+accepts the same `archive` value plus an `ids` array.
 
 ### Delete a purchase order
 
 ```http
 DELETE /api/v2/purchase-orders/{id}
+POST /api/v2/purchase-orders/delete
 ```
 
 Deletes a purchase order using the existing OrderApi v1 manager path. Deletion can affect
@@ -304,20 +684,223 @@ purchase-order project items, addresses, files, activities, notifications, integ
 events, and inventory state through the downstream manager. v2 only resolves the public GUID,
 checks the platform policy, and calls the legacy workflow.
 
+The batch route uses `POST` so clients can send a command body without relying on a DELETE
+request body:
+
+```json
+{
+  "ids": [
+    "9d6048f4-7a4a-423f-a30c-95b6f3e2488d",
+    "ec7d1478-1918-4469-a86f-9dd982e5f4c5"
+  ]
+}
+```
+
+### Send and direct-order purchase orders
+
+```http
+POST /api/v2/purchase-orders/{id}/send
+POST /api/v2/purchase-orders/send
+POST /api/v2/purchase-orders/{id}/adi-direct-order
+POST /api/v2/purchase-orders/{id}/amazon-order
+POST /api/v2/purchase-orders/amazon-order
+```
+
+Send/email endpoints call the legacy supplier email workflow. The workflow may create
+recipient-token links as an email side effect, but anonymous recipient-token read/report paths
+remain outside the bearer-auth v2 API.
+
+Single send request:
+
+```json
+{
+  "sendCopyToUser": true
+}
+```
+
+Batch send request:
+
+```json
+{
+  "ids": [
+    "9d6048f4-7a4a-423f-a30c-95b6f3e2488d",
+    "ec7d1478-1918-4469-a86f-9dd982e5f4c5"
+  ],
+  "sendCopyToUser": true
+}
+```
+
+ADI direct-order delegates to the ADI purchase-order file workflow, including ADI supplier
+validation, address validation, file generation/upload, and ordered-state transition. Amazon
+direct-order delegates to the Amazon Business workflow, including integration connection
+validation, Amazon payload creation, ordered-state transition, and webhook publication.
+The batch Amazon route accepts an `ids` array of public purchase-order GUIDs and returns
+the same reference number shape as the single-order route.
+
+### Apply catalog costs to purchase-order items
+
+```http
+POST /api/v2/purchase-orders/{id}/items/apply-catalog-costs
+```
+
+Applies catalog cost updates to draft purchase-order items through the existing
+PurchaseOrderItemManager workflow. The route ID is the public purchase-order GUID. The
+downstream manager updates purchase-order item unit prices and related project item costs
+where applicable.
+
+### Manage service-call addresses
+
+```http
+GET /api/v2/service-calls/{id}/addresses
+GET /api/v2/service-calls/{id}/addresses/billing
+PUT /api/v2/service-calls/{id}/addresses/billing
+GET /api/v2/service-calls/{id}/addresses/site
+PUT /api/v2/service-calls/{id}/addresses/site
+```
+
+These routes expose the ServiceApi v1 service-call billing and site address workflow.
+The route `id` is the public service-call GUID. Billing and site are singleton child
+resources; v2 does not accept or return the legacy address row ID.
+
+Address updates accept the v2 address update shape and delegate to the existing address
+save manager. The save queues the same tax update workflow used by the application:
+
+```json
+{
+  "name": "Main residence",
+  "street1": "100 Main St",
+  "street2": "Suite 200",
+  "city": "Austin",
+  "state": "TX",
+  "postalCode": "78701",
+  "country": "US"
+}
+```
+
+### Update service-call lifecycle state
+
+```http
+PUT /api/v2/service-calls/{id}/state
+```
+
+Updates a service-call lifecycle state through the same manager used by Angular's internal
+ServiceApi state actions. The route `id` is the public service-call GUID. Supported states are:
+
+| State | Effect |
+| --- | --- |
+| `awaiting_parts` | Mark the service call awaiting parts. |
+| `parts_ordered` | Mark parts ordered. |
+| `parts_received` | Mark parts received. |
+| `in_progress` | Mark the service call in progress. |
+| `ready_for_invoice` | Mark the service call ready for invoice/payment request. |
+| `invoice_sent` | Mark the invoice/payment request sent. |
+| `on_hold` | Put the service call on hold. |
+| `canceled` | Cancel the service call. |
+| `completed` | Complete the service call. |
+
+```json
+{
+  "state": "ready_for_invoice"
+}
+```
+
+The API also accepts common client aliases such as `ready_for_payment_request`,
+`payment_requested`, camel-case state names, and `cancelled`. It does not accept tenant-local
+custom service-call status IDs. Those require a future public status catalog before v2 can
+avoid exposing internal integer IDs.
+
+The downstream manager owns the side effects: schedule cleanup, payment status resets,
+inventory release, checklist completion/reset, service-call activity creation, price updates,
+and completion/cancellation webhooks.
+
+### Manage service-contract aggregates and lifecycle
+
+```http
+POST /api/v2/service-contracts/status-summary
+POST /api/v2/service-contracts/expiring-count
+PUT /api/v2/service-contracts/{id}/estimated-start-date
+POST /api/v2/service-contracts/{id}/cancel
+POST /api/v2/service-contracts/{id}/open
+DELETE /api/v2/service-contracts/{id}
+DELETE /api/v2/service-contracts/{id}/terms-and-conditions
+```
+
+The aggregate endpoints return count-only service-contract data through the ServiceApi v1
+summary workflows. They accept date/filter payloads matching the generated endpoint schemas
+and do not return service-contract row IDs.
+
+Estimated start date is an explicit command with named type values instead of the legacy
+type ID:
+
+```json
+{
+  "type": "days-after-project-completion",
+  "daysAfterProjectCompletion": 30
+}
+```
+
+Use `"type": "date"` with a `date` value to set a fixed start date, or `"type": "none"`
+to clear the estimated start date mode. Cancel requires a body so the manager can preserve
+the cancellation date semantics:
+
+```json
+{
+  "canceledDate": "2026-06-09T00:00:00Z"
+}
+```
+
+Open, delete, and terms-and-conditions delete use only the public service-contract GUID.
+The downstream manager owns paid-payment guards, dependent service-call cleanup, automatic
+renewal cleanup, status updates, and webhook side effects.
+
+### Manage service-contract payment schedules and invoices
+
+```http
+GET /api/v2/service-contracts/{id}/payment-schedules
+PUT /api/v2/service-contracts/{id}/payment-schedules
+GET /api/v2/service-contracts/{id}/invoices
+POST /api/v2/service-contracts/{id}/invoices/send
+POST /api/v2/service-contracts/{serviceContractId}/invoices/{invoiceId}/files
+```
+
+Payment schedule routes use the public service-contract GUID and public payment schedule
+GUIDs. Existing terms are matched by `uniqueId`; new terms omit it so the legacy manager can
+generate the identifier.
+
+`GET /invoices` reads service-contract payment requests and returns public payment GUIDs.
+`POST /invoices/send` resolves public payment schedule GUIDs, creates or reuses payment
+rows, and emails payment links through the existing ServiceContractPaymentManager:
+
+```json
+{
+  "paymentScheduleIds": [
+    "af56978f-1263-432b-993f-fac6a6f27db9"
+  ],
+  "sendCopyToUser": true
+}
+```
+
+The service-contract invoice file upload route resolves both the public service-contract
+GUID and public invoice/payment GUID before calling the file upload manager. It returns the
+same public v2 file detail shape as project and service-call invoice uploads.
+
 ## Manager behavior
 
 These endpoints are v2 controllers over the existing workflow managers. They do not implement
 parallel business logic. Existing manager permissions, locked-change-order checks, inventory
-guards, project payment term side effects, invoice status rules, activities, notifications,
-file-upload rules, purchase-order side effects, and webhooks still run downstream.
+guards, opportunity address tax refresh and activity creation, project payment term side
+effects, invoice status rules, activities, notifications, file-upload rules, purchase-order
+side effects, service-call address/state side effects, service-contract side effects, and
+webhooks still run downstream.
 
 Direct approved-project item add is intentionally not exposed. Add items to approved projects
 through a change order so the same locked-state and inventory behavior used by the D-Tools app
 is preserved.
 
-Purchase-order create, supplier ordering, send/email, Amazon direct-order, and batch-create
-workflows remain planned separately because they introduce more supplier, item, external-send,
-and marketplace side effects than the existing status/archive/delete commands.
+Supplier ordering discovery, purchase-order item write/delete workflows, catalog setup writes,
+inventory writes, drawing/task/service-plan uploads, and long-tail tenant settings remain
+planned separately because those v1 paths still expose internal child IDs, generic patch
+contracts, or token-specific/anonymous semantics.
 
 ## Error handling
 
