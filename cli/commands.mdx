@@ -19,6 +19,7 @@ See [Global flags](/cli/overview#global-flags) for flags available on every comm
 | `dtcloud auth login` | Sign in with Entra External ID device-code flow. |
 | `dtcloud auth logout` | Delete the local MSAL token cache. |
 | `dtcloud auth status` | Check whether the current profile has a usable cached token. |
+| `dtcloud auth token` | Print the current access token from silent token acquisition. |
 | `dtcloud profile list` | List configured CLI profiles. |
 | `dtcloud profile set <name>` | Create or update a profile. |
 | `dtcloud accounts list` | List accounts visible to the signed-in user. |
@@ -30,6 +31,9 @@ See [Global flags](/cli/overview#global-flags) for flags available on every comm
 ```bash
 # Check token status
 dtcloud auth status --output yaml
+
+# Print a bearer token for curl or the API playground
+dtcloud auth token
 
 # List and select an account
 dtcloud accounts list

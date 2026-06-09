@@ -111,9 +111,18 @@ raw HTTP, every step also shows the equivalent `curl` command.
       ```
     </CodeGroup>
 
-    To get a raw bearer token for use in `curl` or the API reference playground, bypass
-    MSAL by reading the cached token, or set the `DTCLOUD_ACCESS_TOKEN` environment
-    variable for one-off diagnostic calls:
+    To get a raw bearer token for use in `curl` or the API reference playground, print
+    the current token from the CLI:
+
+    ```bash
+    TOKEN="$(dtcloud auth token)"
+    ```
+
+    `auth token` uses silent acquisition only. It can refresh through the local MSAL cache,
+    but it will not start device-code login. Treat the output as a secret.
+
+    To bypass MSAL entirely for one-off diagnostic calls, set the `DTCLOUD_ACCESS_TOKEN`
+    environment variable:
 
     ```bash
     DTCLOUD_ACCESS_TOKEN="<token>" dtcloud me --output json
