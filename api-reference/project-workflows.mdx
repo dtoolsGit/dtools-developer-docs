@@ -1,6 +1,6 @@
 ---
 title: "Project workflow APIs"
-description: "How to use the v2 workflow endpoints for winning opportunities, adding line items, managing files, payment schedules, invoices, purchase-order lifecycle commands, service-call states, and installed item rows."
+description: "How to use the v2 workflow endpoints for winning opportunities, managing opportunity addresses, adding line items, managing files, payment schedules, invoices, purchase-order lifecycle commands, service-call states, and installed item rows."
 ---
 
 The v2 platform now exposes the core quote-to-project workflows that previously required
@@ -18,6 +18,7 @@ Historically, these workflows were split across public CloudApi v1 and Angular/i
 services. v2 now puts the same operations behind governed bearer-token APIs:
 
 - Opportunity win creates the project through the existing opportunity/project workflow.
+- Opportunity billing and site addresses use the same address save workflow, tax refresh, and activity side effects as the app.
 - Quote and project item writes call the same quote/project item manager paths the app uses.
 - Payment schedules and invoices use the existing project payment managers.
 - Install-status updates remain lifecycle commands, not generic field patches.
@@ -31,6 +32,8 @@ services. v2 now puts the same operations behind governed bearer-token APIs:
 | Step | Endpoint | Policy |
 | --- | --- | --- |
 | Win an opportunity and create its project | `POST /api/v2/opportunities/{id}/win` | `Opportunities:Write` |
+| Read opportunity addresses | `GET /api/v2/opportunities/{id}/addresses`, `GET /api/v2/opportunities/{id}/addresses/billing`, `GET /api/v2/opportunities/{id}/addresses/site` | `Opportunities:Read` |
+| Update opportunity billing or site address | `PUT /api/v2/opportunities/{id}/addresses/billing`, `PUT /api/v2/opportunities/{id}/addresses/site` | `Opportunities:Write` |
 | Add quote line items | `POST /api/v2/quotes/{id}/items` | `Quotes:Write` |
 | Add project items through a change order | `POST /api/v2/projects/{projectId}/change-orders/{changeOrderId}/items` | `Projects:Write` |
 | Upload a file to a supported entity | `POST /api/v2/files` | `Files:Write` |
@@ -88,6 +91,11 @@ Route IDs are public GUIDs. v2 resolves those GUIDs inside the authenticated ten
 calling the existing D-Tools workflow managers. This applies to opportunities, projects,
 quotes, change orders, project and quote locations/systems, clients, invoices/payments,
 payment terms, purchase orders, files, quote items, project items, and service calls.
+
+Opportunity billing and site addresses are singleton child resources. They are addressed by
+their parent opportunity GUID plus the fixed `billing` or `site` route segment because the
+legacy address rows do not have public GUIDs. Address delete by legacy row ID remains
+deferred until a public address identity or explicit delete command is available.
 
 Some request-body fields still follow the generated endpoint schema for the existing manager
 contract. When a field is a public resource identity in v2, it is represented as a GUID. When
@@ -226,6 +234,42 @@ GUID. The body supplies the accepted quote GUID:
 The response is a `V2IdResponse` whose `id` is the created project GUID. The existing workflow
 handles quote acceptance, project creation, project payment/invoice side effects, activities,
 notifications, and webhooks.
+
+### Manage opportunity addresses
+
+```http
+GET /api/v2/opportunities/{id}/addresses
+GET /api/v2/opportunities/{id}/addresses/billing
+PUT /api/v2/opportunities/{id}/addresses/billing
+GET /api/v2/opportunities/{id}/addresses/site
+PUT /api/v2/opportunities/{id}/addresses/site
+```
+
+These routes expose the Angular/internal v1 opportunity billing and site address workflow
+without exposing the legacy address row ID. The route `id` is the public opportunity GUID. v2
+resolves that GUID inside the authenticated tenant, then calls the existing address manager
+with the legacy project/opportunity entity context.
+
+`GET /addresses` returns the opportunity's address details. The singleton `billing` and
+`site` reads return the corresponding address detail. The `PUT` routes accept the existing
+address DTO shape:
+
+```json
+{
+  "street1": "123 Main St",
+  "street2": "Suite 400",
+  "city": "Austin",
+  "state": "TX",
+  "postalCode": "78701",
+  "country": "US"
+}
+```
+
+Saving an address delegates to `AddressManager.SaveAddress`, queues the existing quote-tax
+refresh, and creates the same billing/site opportunity activity used by the application. The
+tax refresh is asynchronous, so clients should treat the address save response as confirmation
+that the address was saved and the tax update was queued, not that quote taxes have already
+finished recalculating.
 
 ### Add quote line items
 
@@ -492,9 +536,9 @@ and completion/cancellation webhooks.
 
 These endpoints are v2 controllers over the existing workflow managers. They do not implement
 parallel business logic. Existing manager permissions, locked-change-order checks, inventory
-guards, project payment term side effects, invoice status rules, activities, notifications,
-file-upload rules, purchase-order side effects, service-call state side effects, and webhooks
-still run downstream.
+guards, opportunity address tax refresh and activity creation, project payment term side
+effects, invoice status rules, activities, notifications, file-upload rules, purchase-order
+side effects, service-call state side effects, and webhooks still run downstream.
 
 Direct approved-project item add is intentionally not exposed. Add items to approved projects
 through a change order so the same locked-state and inventory behavior used by the D-Tools app
