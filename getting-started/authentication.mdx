@@ -35,7 +35,17 @@ Verify the token is valid at any time:
 dtcloud auth status --output yaml
 ```
 
-To use a token directly with `curl` or the API reference playground, bypass MSAL with the
+Print the current access token when you need to call the API with `curl` or paste a token
+into the API reference playground:
+
+```bash
+dtcloud auth token
+```
+
+`auth token` uses silent acquisition only. It can refresh through the local MSAL cache, but
+it will not start device-code login. Treat the output as a secret.
+
+To bypass MSAL entirely during tests or one-off diagnostics, supply a token with the
 environment variable:
 
 ```bash

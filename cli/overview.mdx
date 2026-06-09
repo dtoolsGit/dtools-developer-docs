@@ -156,6 +156,16 @@ during testing or one-off diagnostics:
 DTCLOUD_ACCESS_TOKEN="<token>" dtcloud me --output json
 ```
 
+Print the current access token for `curl` or the API reference playground:
+
+```bash
+dtcloud auth token
+```
+
+`auth token` writes only the bearer token to stdout. It uses silent token acquisition, so
+MSAL can refresh from the local cache but the command will not start device-code login.
+Treat the output as a secret.
+
 ## Safe writes and idempotency
 
 Create, update, duplicate, restore, batch-create, webhook-create, and agent-chat operations
