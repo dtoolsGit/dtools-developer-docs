@@ -22,7 +22,7 @@ services. v2 now puts the same operations behind governed bearer-token APIs:
 - Quote and project item writes call the same quote/project item manager paths the app uses.
 - Payment schedules and invoices use the existing project payment managers.
 - Install-status updates remain lifecycle commands, not generic field patches.
-- GUID-backed file uploads, parent-scoped project/quote location and system uploads, and file link/name/visibility/delete commands use the existing file manager after v2 entity resolution.
+- GUID-backed file uploads, parent-scoped project/quote location and system uploads, project/service-call invoice uploads, project subscription uploads, proposal uploads, and file link/name/visibility/delete commands use the existing file manager after v2 entity resolution.
 - Purchase-order status, archive, delete, send/email, ADI direct-order, and Amazon direct-order actions use the existing purchase-order workflow.
 - Service-call state transitions use the existing ServiceApi manager so visit, payment, inventory, checklist, activity, and webhook side effects stay intact.
 - Registration, anonymous payment-session, and recipient checkout flows stay deferred.
@@ -38,6 +38,8 @@ services. v2 now puts the same operations behind governed bearer-token APIs:
 | Add project items through a change order | `POST /api/v2/projects/{projectId}/change-orders/{changeOrderId}/items` | `Projects:Write` |
 | Upload a file to a supported entity | `POST /api/v2/files` | `Files:Write` |
 | Upload a file to a project or quote location/system | `POST /api/v2/projects/{projectId}/locations/{locationId}/files`, `POST /api/v2/projects/{projectId}/systems/{systemId}/files`, `POST /api/v2/quotes/{quoteId}/locations/{locationId}/files`, `POST /api/v2/quotes/{quoteId}/systems/{systemId}/files` | `Files:Write` |
+| Upload a file to an invoice or project subscription | `POST /api/v2/projects/{projectId}/invoices/{invoiceId}/files`, `POST /api/v2/service-calls/{serviceCallId}/invoices/{invoiceId}/files`, `POST /api/v2/projects/{projectId}/subscriptions/{subscriptionId}/files` | `Files:Write` |
+| Upload an internal proposal file | `POST /api/v2/quotes/{quoteId}/proposal/files`, `POST /api/v2/projects/{projectId}/proposal/files`, `POST /api/v2/projects/{projectId}/change-orders/{changeOrderId}/proposal/files` | `Files:Write` |
 | Upload unattached file content | `POST /api/v2/files/unattached` | `Files:Write` |
 | Create or update a file link | `POST /api/v2/files/links`, `PUT /api/v2/files/{id}/link` | `Files:Write` |
 | Rename, show/hide, or delete a file | `PUT /api/v2/files/{id}/name`, `PUT /api/v2/files/{id}/field-user-visibility`, `DELETE /api/v2/files/{id}` | `Files:Write` |
@@ -122,7 +124,7 @@ public GUID inside the authenticated tenant. The multipart form fields are:
 
 | Field | Required | Description |
 | --- | --- | --- |
-| `entityType` | Yes | Supported values: `client`, `opportunity`, `project`, `quote`, `product`, `purchase-order`, `service-call`, `service-contract`. |
+| `entityType` | Yes | Supported values: `client`, `opportunity`, `project`, `quote`, `product`, `subscription`, `purchase-order`, `service-call`, `service-contract`. |
 | `entityId` | Yes | Public GUID for the target entity. |
 | `type` | No | Optional legacy file type/category string. |
 | `file` | Yes | Binary file part. |
@@ -177,9 +179,69 @@ curl -X POST "https://dtoolsdevapi.azure-api.net/api/v2/projects/7a88f502-0d4d-4
   -F "file=@./rack-elevation.pdf"
 ```
 
-Drawing, task, service-plan, proposal, payment, subscription, logo/special upload workflows,
-and recipient-token upload flows are still separate parity targets because those v1 paths use
-internal child IDs, domain-specific URL contracts, or anonymous-token semantics.
+Use the scoped upload routes below for invoice, project-subscription, and proposal files.
+
+### Upload invoice, subscription, and proposal files
+
+```http
+POST /api/v2/projects/{projectId}/invoices/{invoiceId}/files
+POST /api/v2/service-calls/{serviceCallId}/invoices/{invoiceId}/files
+POST /api/v2/projects/{projectId}/subscriptions/{subscriptionId}/files
+POST /api/v2/quotes/{quoteId}/proposal/files
+POST /api/v2/projects/{projectId}/proposal/files
+POST /api/v2/projects/{projectId}/change-orders/{changeOrderId}/proposal/files
+Content-Type: multipart/form-data
+```
+
+These routes cover additional Angular/internal v1 upload workflows without exposing legacy
+payment, project-subscription, or proposal row IDs. v2 resolves the public parent GUID first,
+then resolves the child resource inside that parent:
+
+| Route family | Parent resolution | Child resolution | Response |
+| --- | --- | --- | --- |
+| Project invoice files | `projectId` public project GUID | `invoiceId` public payment GUID linked to the project payment terms | Public v2 file detail |
+| Service-call invoice files | `serviceCallId` public service-call GUID | `invoiceId` public payment GUID linked to the service call | Public v2 file detail |
+| Project subscription files | `projectId` public project GUID | `subscriptionId` public project-subscription GUID under the project | Public v2 file detail |
+| Proposal files | Quote, project, or project/change-order public GUIDs | Internal proposal row resolved from the parent | Legacy proposal file detail |
+
+Invoice upload routes preserve the v1 `ManagePayments` permission check inside the legacy
+file-upload facade. Generic catalog subscription uploads through `POST /api/v2/files` with
+`entityType=subscription` preserve the v1 `EditCatalogItem` check. Proposal uploads preserve
+the v1 `Internal = true` file behavior, so their response is the legacy proposal file detail
+instead of the public v2 file detail; internal proposal file rows are not returned by public
+file reads.
+
+Multipart fields:
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `type` | No | Optional legacy file type/category string for invoice and project-subscription uploads. Proposal uploads ignore this value. |
+| `file` | Yes | Binary file part. |
+
+Example project invoice upload:
+
+```bash
+curl -X POST "https://dtoolsdevapi.azure-api.net/api/v2/projects/7a88f502-0d4d-4bd4-b195-f00c9c163dd3/invoices/af56978f-1263-432b-993f-fac6a6f27db9/files" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-DTools-AccountId: $ACCOUNT_ID" \
+  -H "Idempotency-Key: project-invoice-file-20260608-001" \
+  -F "type=InvoiceAttachment" \
+  -F "file=@./customer-po.pdf"
+```
+
+Example proposal upload:
+
+```bash
+curl -X POST "https://dtoolsdevapi.azure-api.net/api/v2/projects/7a88f502-0d4d-4bd4-b195-f00c9c163dd3/change-orders/5f1c77aa-bafa-41d8-a552-5f67432519c0/proposal/files" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-DTools-AccountId: $ACCOUNT_ID" \
+  -H "Idempotency-Key: change-order-proposal-file-20260608-001" \
+  -F "file=@./proposal-cover.png"
+```
+
+Drawing, task, service-plan, logo/special upload workflows, and recipient-token upload flows
+remain separate parity targets because those v1 paths still use internal child IDs,
+domain-specific URL contracts, or anonymous-token semantics.
 
 ### Manage file links and metadata
 

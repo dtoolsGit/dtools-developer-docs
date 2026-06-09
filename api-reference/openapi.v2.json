@@ -3064,7 +3064,7 @@
           "Files"
         ],
         "summary": "Upload a file for a supported entity by public entity id.",
-        "description": "**Capability:** `files` · **Policy:** `Files:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nAccepts multipart/form-data with a `file` part plus `entityType`, `entityId`, and optional `type` form fields. Supported entity types are client, opportunity, project, quote, product, purchase-order, service-call, and service-contract.",
+        "description": "**Capability:** `files` · **Policy:** `Files:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nAccepts multipart/form-data with a `file` part plus `entityType`, `entityId`, and optional `type` form fields. Supported entity types are client, opportunity, project, quote, product, subscription, purchase-order, service-call, and service-contract.",
         "operationId": "v2.files.upload",
         "parameters": [
           {
@@ -4585,6 +4585,1817 @@
           }
         },
         "x-dtools-endpoint-id": "v2.quotes.systems.files.upload",
+        "x-dtools-feature-key": "files",
+        "x-dtools-default-release-stage": "GenerallyAvailable",
+        "x-dtools-release-gated": true,
+        "x-dtools-idempotent": true,
+        "x-dtools-async-job": false,
+        "x-dtools-policy": "Files:Write",
+        "x-dtools-capability-family": "files",
+        "x-dtools-access-depth": "BoundedWrite",
+        "x-dtools-workload-class": "BoundedWrite"
+      }
+    },
+    "/api/v2/projects/{projectId}/invoices/{invoiceId}/files": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Upload a file to a project invoice.",
+        "description": "**Capability:** `files` · **Policy:** `Files:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nParent-scoped v2 route for the Angular PaymentFileUpload UploadPaymentFile workflow when the invoice belongs to a project. The project and invoice route ids are public GUIDs and must belong to the caller's tenant.",
+        "operationId": "v2.projects.invoices.files.upload",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "invoiceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Optional client-generated key for replay-safe POST/PUT calls. The cache key is scoped by tenant, method, path, and key.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "examples": {
+                "uploadProjectInvoiceFile": {
+                  "summary": "Upload a project invoice file",
+                  "value": {
+                    "type": "invoice-attachment",
+                    "file": "customer-po.pdf"
+                  }
+                }
+              },
+              "encoding": {
+                "type": {
+                  "style": "form"
+                },
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.Data.FileDetail"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.Data.FileDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request payload, route value, or query string is invalid. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "invalid_argument",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed or no valid v2 Bearer token was provided. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "unauthorized",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The principal is authenticated but does not satisfy v2 governance, release, policy, budget, channel, or capability requirements. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "permission_missing",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource was not found in the caller's tenant scope. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "not_found",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The request was throttled or rejected by a workload budget. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "budget_exceeded",
+                        "message": "The request could not be completed.",
+                        "retryable": true,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "The server failed while processing the request. The response body is a V2ErrorEnvelope with correlation identifiers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "unexpected_error",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A required platform dependency or release configuration is temporarily unavailable. The response body is a retryable V2ErrorEnvelope when retryable is true.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "release_config_unavailable",
+                        "message": "The request could not be completed.",
+                        "retryable": true,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-dtools-endpoint-id": "v2.projects.invoices.files.upload",
+        "x-dtools-feature-key": "files",
+        "x-dtools-default-release-stage": "GenerallyAvailable",
+        "x-dtools-release-gated": true,
+        "x-dtools-idempotent": true,
+        "x-dtools-async-job": false,
+        "x-dtools-policy": "Files:Write",
+        "x-dtools-capability-family": "files",
+        "x-dtools-access-depth": "BoundedWrite",
+        "x-dtools-workload-class": "BoundedWrite"
+      }
+    },
+    "/api/v2/service-calls/{serviceCallId}/invoices/{invoiceId}/files": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Upload a file to a service-call invoice.",
+        "description": "**Capability:** `files` · **Policy:** `Files:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nParent-scoped v2 route for the Angular PaymentFileUpload UploadPaymentFile workflow when the invoice belongs to a service call. The service call and invoice route ids are public GUIDs and must belong to the caller's tenant.",
+        "operationId": "v2.service.service-calls.invoices.files.upload",
+        "parameters": [
+          {
+            "name": "serviceCallId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "invoiceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Optional client-generated key for replay-safe POST/PUT calls. The cache key is scoped by tenant, method, path, and key.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "examples": {
+                "uploadServiceCallInvoiceFile": {
+                  "summary": "Upload a service-call invoice file",
+                  "value": {
+                    "type": "invoice-attachment",
+                    "file": "signed-work-order.pdf"
+                  }
+                }
+              },
+              "encoding": {
+                "type": {
+                  "style": "form"
+                },
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.Data.FileDetail"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.Data.FileDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request payload, route value, or query string is invalid. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "invalid_argument",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed or no valid v2 Bearer token was provided. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "unauthorized",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The principal is authenticated but does not satisfy v2 governance, release, policy, budget, channel, or capability requirements. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "permission_missing",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource was not found in the caller's tenant scope. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "not_found",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The request was throttled or rejected by a workload budget. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "budget_exceeded",
+                        "message": "The request could not be completed.",
+                        "retryable": true,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "The server failed while processing the request. The response body is a V2ErrorEnvelope with correlation identifiers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "unexpected_error",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A required platform dependency or release configuration is temporarily unavailable. The response body is a retryable V2ErrorEnvelope when retryable is true.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "release_config_unavailable",
+                        "message": "The request could not be completed.",
+                        "retryable": true,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-dtools-endpoint-id": "v2.service.service-calls.invoices.files.upload",
+        "x-dtools-feature-key": "files",
+        "x-dtools-default-release-stage": "GenerallyAvailable",
+        "x-dtools-release-gated": true,
+        "x-dtools-idempotent": true,
+        "x-dtools-async-job": false,
+        "x-dtools-policy": "Files:Write",
+        "x-dtools-capability-family": "files",
+        "x-dtools-access-depth": "BoundedWrite",
+        "x-dtools-workload-class": "BoundedWrite"
+      }
+    },
+    "/api/v2/projects/{projectId}/subscriptions/{subscriptionId}/files": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Upload a file to a project subscription.",
+        "description": "**Capability:** `files` · **Policy:** `Files:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nParent-scoped v2 route for the Angular ProjectFileUpload UploadProjectSubscriptionFile workflow. The project and subscription route ids are public GUIDs and must belong to the caller's tenant.",
+        "operationId": "v2.projects.subscriptions.files.upload",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "subscriptionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Optional client-generated key for replay-safe POST/PUT calls. The cache key is scoped by tenant, method, path, and key.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "examples": {
+                "uploadProjectSubscriptionFile": {
+                  "summary": "Upload a project subscription file",
+                  "value": {
+                    "type": "manual",
+                    "file": "subscription-terms.pdf"
+                  }
+                }
+              },
+              "encoding": {
+                "type": {
+                  "style": "form"
+                },
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.Data.FileDetail"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.Data.FileDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request payload, route value, or query string is invalid. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "invalid_argument",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed or no valid v2 Bearer token was provided. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "unauthorized",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The principal is authenticated but does not satisfy v2 governance, release, policy, budget, channel, or capability requirements. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "permission_missing",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource was not found in the caller's tenant scope. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "not_found",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The request was throttled or rejected by a workload budget. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "budget_exceeded",
+                        "message": "The request could not be completed.",
+                        "retryable": true,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "The server failed while processing the request. The response body is a V2ErrorEnvelope with correlation identifiers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "unexpected_error",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A required platform dependency or release configuration is temporarily unavailable. The response body is a retryable V2ErrorEnvelope when retryable is true.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "release_config_unavailable",
+                        "message": "The request could not be completed.",
+                        "retryable": true,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-dtools-endpoint-id": "v2.projects.subscriptions.files.upload",
+        "x-dtools-feature-key": "files",
+        "x-dtools-default-release-stage": "GenerallyAvailable",
+        "x-dtools-release-gated": true,
+        "x-dtools-idempotent": true,
+        "x-dtools-async-job": false,
+        "x-dtools-policy": "Files:Write",
+        "x-dtools-capability-family": "files",
+        "x-dtools-access-depth": "BoundedWrite",
+        "x-dtools-workload-class": "BoundedWrite"
+      }
+    },
+    "/api/v2/quotes/{quoteId}/proposal/files": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Upload an internal file to a quote proposal.",
+        "description": "**Capability:** `files` · **Policy:** `Files:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nParent-scoped v2 route for the Angular ProposalFileUpload UploadProposalFile workflow. Proposal rows do not have public GUIDs, so v2 resolves the proposal from the quote public GUID and stores the file as an internal proposal file like v1.",
+        "operationId": "v2.quotes.proposal.files.upload",
+        "parameters": [
+          {
+            "name": "quoteId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Optional client-generated key for replay-safe POST/PUT calls. The cache key is scoped by tenant, method, path, and key.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "examples": {
+                "uploadQuoteProposalFile": {
+                  "summary": "Upload an internal quote proposal file",
+                  "value": {
+                    "file": "quote-proposal-cover.png"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.CatalogData.FileDetail"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.CatalogData.FileDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request payload, route value, or query string is invalid. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "invalid_argument",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed or no valid v2 Bearer token was provided. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "unauthorized",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The principal is authenticated but does not satisfy v2 governance, release, policy, budget, channel, or capability requirements. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "permission_missing",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource was not found in the caller's tenant scope. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "not_found",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The request was throttled or rejected by a workload budget. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "budget_exceeded",
+                        "message": "The request could not be completed.",
+                        "retryable": true,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "The server failed while processing the request. The response body is a V2ErrorEnvelope with correlation identifiers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "unexpected_error",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A required platform dependency or release configuration is temporarily unavailable. The response body is a retryable V2ErrorEnvelope when retryable is true.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "release_config_unavailable",
+                        "message": "The request could not be completed.",
+                        "retryable": true,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-dtools-endpoint-id": "v2.quotes.proposal.files.upload",
+        "x-dtools-feature-key": "files",
+        "x-dtools-default-release-stage": "GenerallyAvailable",
+        "x-dtools-release-gated": true,
+        "x-dtools-idempotent": true,
+        "x-dtools-async-job": false,
+        "x-dtools-policy": "Files:Write",
+        "x-dtools-capability-family": "files",
+        "x-dtools-access-depth": "BoundedWrite",
+        "x-dtools-workload-class": "BoundedWrite"
+      }
+    },
+    "/api/v2/projects/{projectId}/proposal/files": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Upload an internal file to a project proposal.",
+        "description": "**Capability:** `files` · **Policy:** `Files:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nParent-scoped v2 route for the Angular ProposalFileUpload UploadProposalFile workflow. Proposal rows do not have public GUIDs, so v2 resolves the proposal from the project public GUID and stores the file as an internal proposal file like v1.",
+        "operationId": "v2.projects.proposal.files.upload",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Optional client-generated key for replay-safe POST/PUT calls. The cache key is scoped by tenant, method, path, and key.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "examples": {
+                "uploadProjectProposalFile": {
+                  "summary": "Upload an internal project proposal file",
+                  "value": {
+                    "file": "project-proposal-cover.png"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.CatalogData.FileDetail"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.CatalogData.FileDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request payload, route value, or query string is invalid. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "invalid_argument",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed or no valid v2 Bearer token was provided. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "unauthorized",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The principal is authenticated but does not satisfy v2 governance, release, policy, budget, channel, or capability requirements. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "permission_missing",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource was not found in the caller's tenant scope. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "not_found",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The request was throttled or rejected by a workload budget. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "budget_exceeded",
+                        "message": "The request could not be completed.",
+                        "retryable": true,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "The server failed while processing the request. The response body is a V2ErrorEnvelope with correlation identifiers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "unexpected_error",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A required platform dependency or release configuration is temporarily unavailable. The response body is a retryable V2ErrorEnvelope when retryable is true.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "release_config_unavailable",
+                        "message": "The request could not be completed.",
+                        "retryable": true,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-dtools-endpoint-id": "v2.projects.proposal.files.upload",
+        "x-dtools-feature-key": "files",
+        "x-dtools-default-release-stage": "GenerallyAvailable",
+        "x-dtools-release-gated": true,
+        "x-dtools-idempotent": true,
+        "x-dtools-async-job": false,
+        "x-dtools-policy": "Files:Write",
+        "x-dtools-capability-family": "files",
+        "x-dtools-access-depth": "BoundedWrite",
+        "x-dtools-workload-class": "BoundedWrite"
+      }
+    },
+    "/api/v2/projects/{projectId}/change-orders/{changeOrderId}/proposal/files": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Upload an internal file to a change-order proposal.",
+        "description": "**Capability:** `files` · **Policy:** `Files:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nParent-scoped v2 route for the Angular ProposalFileUpload UploadProposalFile workflow. The project and change-order route ids are public GUIDs and must belong to the caller's tenant.",
+        "operationId": "v2.projects.change-orders.proposal.files.upload",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "changeOrderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Optional client-generated key for replay-safe POST/PUT calls. The cache key is scoped by tenant, method, path, and key.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "examples": {
+                "uploadChangeOrderProposalFile": {
+                  "summary": "Upload an internal change-order proposal file",
+                  "value": {
+                    "file": "change-order-proposal-cover.png"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.CatalogData.FileDetail"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.CatalogData.FileDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request payload, route value, or query string is invalid. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "invalid_argument",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed or no valid v2 Bearer token was provided. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "unauthorized",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The principal is authenticated but does not satisfy v2 governance, release, policy, budget, channel, or capability requirements. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "permission_missing",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource was not found in the caller's tenant scope. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "not_found",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The request was throttled or rejected by a workload budget. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "budget_exceeded",
+                        "message": "The request could not be completed.",
+                        "retryable": true,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "The server failed while processing the request. The response body is a V2ErrorEnvelope with correlation identifiers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "unexpected_error",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A required platform dependency or release configuration is temporarily unavailable. The response body is a retryable V2ErrorEnvelope when retryable is true.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "release_config_unavailable",
+                        "message": "The request could not be completed.",
+                        "retryable": true,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-dtools-endpoint-id": "v2.projects.change-orders.proposal.files.upload",
         "x-dtools-feature-key": "files",
         "x-dtools-default-release-stage": "GenerallyAvailable",
         "x-dtools-release-gated": true,
@@ -17049,6 +18860,347 @@
         "x-dtools-capability-family": "procurement",
         "x-dtools-access-depth": "Read",
         "x-dtools-workload-class": "RequestResponseRead"
+      },
+      "post": {
+        "tags": [
+          "Procurement"
+        ],
+        "summary": "Create purchase orders from orderable project or catalog product rows.",
+        "description": "**Capability:** `procurement` · **Policy:** `PurchaseOrders:Write` · **Access depth:** `BoundedWrite` · **Release stage:** `GenerallyAvailable` · **Release-gated:** yes · **Idempotent:** yes · **Async job:** no · **Workload:** `BoundedWrite`\n\nCreates or appends draft purchase orders through the OrderApi v1 CreatePurchaseOrders2 workflow. Request IDs are public GUIDs. Supplier selection is derived from the selected project item rows or catalog product defaults; v2 does not accept legacy supplier integer IDs.",
+        "operationId": "v2.procurement.purchase-orders.create",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Optional client-generated key for replay-safe POST/PUT calls. The cache key is scoped by tenant, method, path, and key.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/DTools.Cloud.Api.V2.Platform.V2CreatePurchaseOrdersRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DTools.Cloud.Api.V2.Platform.V2CreatePurchaseOrdersRequest"
+              },
+              "examples": {
+                "createPurchaseOrders": {
+                  "summary": "Create purchase orders",
+                  "value": {
+                    "projectIds": [
+                      "7a88f502-0d4d-4bd4-b195-f00c9c163dd3"
+                    ],
+                    "projectItems": [
+                      {
+                        "projectId": "7a88f502-0d4d-4bd4-b195-f00c9c163dd3",
+                        "itemId": "3c6de30c-19d5-44f1-b32f-4e0e0f13f8ec",
+                        "unitPrice": 125.5,
+                        "quantity": 2
+                      }
+                    ],
+                    "items": [
+                      {
+                        "productId": "25d25c7e-1713-47c3-b527-8f027d229a2b",
+                        "quantity": 1,
+                        "unitPrice": 89.95
+                      }
+                    ],
+                    "useCatalogCost": true
+                  }
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DTools.Cloud.Api.V2.Platform.V2CreatePurchaseOrdersRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/DTools.Cloud.Api.V2.Platform.V2CreatePurchaseOrdersRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DTools.Cloud.Api.V2.Platform.V2PurchaseOrderCreatedResult"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DTools.Cloud.Api.V2.Platform.V2PurchaseOrderCreatedResult"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request payload, route value, or query string is invalid. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "invalid_argument",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed or no valid v2 Bearer token was provided. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "unauthorized",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The principal is authenticated but does not satisfy v2 governance, release, policy, budget, channel, or capability requirements. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "permission_missing",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested resource was not found in the caller's tenant scope. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "not_found",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with the current resource state. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "conflict",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The request was throttled or rejected by a workload budget. The response body is a V2ErrorEnvelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "budget_exceeded",
+                        "message": "The request could not be completed.",
+                        "retryable": true,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "The server failed while processing the request. The response body is a V2ErrorEnvelope with correlation identifiers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "unexpected_error",
+                        "message": "The request could not be completed.",
+                        "retryable": false,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A required platform dependency or release configuration is temporarily unavailable. The response body is a retryable V2ErrorEnvelope when retryable is true.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Structured v2 error envelope",
+                    "value": {
+                      "error": {
+                        "code": "release_config_unavailable",
+                        "message": "The request could not be completed.",
+                        "retryable": true,
+                        "requestId": "req-20260520-001",
+                        "correlationId": "corr-20260520-001",
+                        "details": null
+                      }
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTools.Cloud.DataObjects.Platform.V2ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-dtools-endpoint-id": "v2.procurement.purchase-orders.create",
+        "x-dtools-feature-key": "procurement",
+        "x-dtools-default-release-stage": "GenerallyAvailable",
+        "x-dtools-release-gated": true,
+        "x-dtools-idempotent": true,
+        "x-dtools-async-job": false,
+        "x-dtools-policy": "PurchaseOrders:Write",
+        "x-dtools-capability-family": "procurement",
+        "x-dtools-access-depth": "BoundedWrite",
+        "x-dtools-workload-class": "BoundedWrite"
       }
     },
     "/api/v2/purchase-orders/{id}": {
@@ -41310,7 +43462,7 @@
         "properties": {
           "entityType": {
             "type": "string",
-            "description": "Supported parent type, such as client, opportunity, project, quote, product, purchase-order, service-call, or service-contract.",
+            "description": "Supported parent type, such as client, opportunity, project, quote, product, subscription, purchase-order, service-call, or service-contract.",
             "nullable": true
           },
           "entityId": {
@@ -41917,6 +44069,25 @@
         },
         "additionalProperties": false
       },
+      "DTools.Cloud.Api.V2.Platform.V2CatalogItemToOrderRequest": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unitPrice": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "DTools.Cloud.Api.V2.Platform.V2ClientFeatureSnapshot": {
         "type": "object",
         "properties": {
@@ -42069,6 +44240,45 @@
         },
         "additionalProperties": false
       },
+      "DTools.Cloud.Api.V2.Platform.V2CreatePurchaseOrdersRequest": {
+        "type": "object",
+        "properties": {
+          "purchaseOrderIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "nullable": true
+          },
+          "projectIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "nullable": true
+          },
+          "projectItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DTools.Cloud.Api.V2.Platform.V2ProjectItemToOrderRequest"
+            },
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DTools.Cloud.Api.V2.Platform.V2CatalogItemToOrderRequest"
+            },
+            "nullable": true
+          },
+          "useCatalogCost": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "DTools.Cloud.Api.V2.Platform.V2CreateServiceCallInvoiceRequest": {
         "type": "object",
         "properties": {
@@ -42140,6 +44350,30 @@
         },
         "additionalProperties": false,
         "description": "Request to mark an opportunity as lost through the existing stage workflow."
+      },
+      "DTools.Cloud.Api.V2.Platform.V2ProjectItemToOrderRequest": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unitPrice": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
       },
       "DTools.Cloud.Api.V2.Platform.V2ProposalData": {
         "type": "object",
@@ -43054,6 +45288,32 @@
         },
         "additionalProperties": false
       },
+      "DTools.Cloud.Api.V2.Platform.V2PurchaseOrderCreatedResult": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string",
+            "nullable": true
+          },
+          "supplier": {
+            "type": "string",
+            "nullable": true
+          },
+          "productsCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
       "DTools.Cloud.Api.V2.Platform.V2PurchaseOrderDirectOrderResponse": {
         "type": "object",
         "properties": {
@@ -43519,6 +45779,49 @@
           },
           "active": {
             "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DTools.Cloud.CatalogData.FileDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "objectId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "string",
+            "nullable": true
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "previewUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "showInFieldUserView": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "modifiedOn": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
