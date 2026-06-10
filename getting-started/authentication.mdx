@@ -176,6 +176,7 @@ method. See [MCP bridge](/mcp/bridge) for the full MCP authentication flow.
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
 | `401 unauthorized` | No token or expired token | Re-run `dtcloud auth login` or refresh your OAuth token |
+| `AADSTS7000218` during `dtcloud --profile demo auth login` | Demo profile is using the old SPA client app instead of the DirectAPI public client | Upgrade the CLI or run `dtcloud profile set demo --client-id 93fb022f-ef76-4e2e-9aef-9c7c2ed9e473`, then retry login |
 | `401` with `permission_missing` | Token is missing required D-Tools claims | Ensure your OAuth app is registered correctly with the D-Tools Cloud team |
 | `403 channel_not_allowed` | Client application not mapped to an allowed channel | Contact the D-Tools Cloud team to register your application |
 | `403 account_access_denied` | `X-DTools-AccountId` does not match your token | Verify the account ID with `dtcloud accounts list` |
