@@ -1,6 +1,6 @@
 ---
 title: "Project workflow APIs"
-description: "How to use the v2 workflow endpoints for winning opportunities, managing opportunity addresses, adding line items, catalog reference reads, files, payment schedules, invoices, purchase orders, service calls, service contracts, and installed item rows."
+description: "How to use the v2 workflow endpoints for winning opportunities, managing opportunity addresses, catalog products, notes, ToDo tasks, files, payment schedules, invoices, purchase orders, service calls, service contracts, and installed item rows."
 ---
 
 The v2 platform now exposes the core quote-to-project workflows that previously required
@@ -23,6 +23,9 @@ services. v2 now puts the same operations behind governed bearer-token APIs:
 - Payment schedules and invoices use the existing project payment managers.
 - Install-status updates remain lifecycle commands, not generic field patches.
 - Catalog brand, category, supplier, setup, tax, pricing, and new-product reference reads use the existing CatalogApi v1 managers while omitting legacy row IDs.
+- Catalog product create, add-from-library, update, price, barcode, and status write commands use typed v2 DTOs over public product GUIDs.
+- Client, opportunity, and project notes use public parent GUIDs and public note IDs; pinned note commands preserve the existing note manager behavior.
+- UI ToDo/Assignment tasks for clients, opportunities, and projects use public task and assignee GUIDs and are separate from v2 work items and project task-group APIs.
 - GUID-backed file uploads, parent-scoped project/quote location and system uploads, project/service-call invoice uploads, project subscription uploads, proposal uploads, and file link/name/visibility/delete commands use the existing file manager after v2 entity resolution.
 - Catalog item images and tenant company logo commands use the existing upload/company managers without accepting internal item or account IDs.
 - Purchase-order totals, status summaries, estimates, shipment tracking URLs, create, status, archive, delete, send/email, ADI direct-order, Amazon direct-order, and catalog-cost application actions use the existing purchase-order workflow.
@@ -41,6 +44,9 @@ services. v2 now puts the same operations behind governed bearer-token APIs:
 | Add project items through a change order | `POST /api/v2/projects/{projectId}/change-orders/{changeOrderId}/items` | `Projects:Write` |
 | Read catalog reference data | `GET /api/v2/catalog/brands`, `/brands/new`, `/brands/{brandDtin}`, `/brands/{brandDtin}/suppliers`, `/brands/{brandDtin}/new-products`, `/categories`, `/categories/icons`, `/setup/structure`, `/tax-settings`, `/taxes`, `/pricing-options`, `/suppliers`, `/suppliers/dtins`, `/suppliers/{supplierDtin}`, `/suppliers/{supplierDtin}/exists`, `/suppliers/{supplierDtin}/new-products` | `Catalog:Read` |
 | Resolve catalog product DTINs | `POST /api/v2/catalog/products/resolve-dtins` | `Catalog:Read` |
+| Create or update catalog products | `POST /api/v2/catalog/products`, `POST /api/v2/catalog/products/from-library`, `PUT /api/v2/catalog/products/{id}`, `PUT /api/v2/catalog/products/prices`, `PUT /api/v2/catalog/products/barcodes`, `PUT /api/v2/catalog/products/statuses` | `Catalog:Write` |
+| Manage parent-scoped notes | Client, opportunity, and project `GET/POST /notes`, `GET /notes/{noteId}`, `POST /notes/{noteId}/pin`, `POST /notes/{noteId}/unpin` | `Clients:*`, `Opportunities:*`, `Projects:*` |
+| Manage UI ToDo tasks | `GET/POST /api/v2/clients/{clientId}/tasks`, `GET/POST /api/v2/opportunities/{opportunityId}/tasks`, `GET/POST /api/v2/projects/{projectId}/tasks`, `GET/PUT /api/v2/tasks/{taskId}`, `POST /api/v2/tasks/{taskId}/complete` | `Tasks:Read` / `Tasks:Write` |
 | Upload a file to a supported entity | `POST /api/v2/files` | `Files:Write` |
 | Upload catalog item image or manage company logo | `POST /api/v2/catalog/items/{itemId}/images`, `POST /api/v2/company/logo`, `DELETE /api/v2/company/logo` | `Files:Write` |
 | Upload a file to a project or quote location/system | `POST /api/v2/projects/{projectId}/locations/{locationId}/files`, `POST /api/v2/projects/{projectId}/systems/{systemId}/files`, `POST /api/v2/quotes/{quoteId}/locations/{locationId}/files`, `POST /api/v2/quotes/{quoteId}/systems/{systemId}/files` | `Files:Write` |
@@ -107,13 +113,18 @@ request body.
 Route IDs are public GUIDs. v2 resolves those GUIDs inside the authenticated tenant before
 calling the existing D-Tools workflow managers. This applies to opportunities, projects,
 quotes, change orders, project and quote locations/systems, clients, invoices/payments,
-payment terms, purchase orders, files, quote items, project items, service calls, service
-contracts, service-contract payment terms, and service-contract invoices.
+payment terms, purchase orders, files, quote items, project items, notes, UI ToDo tasks,
+task assignee users, service calls, service contracts, service-contract payment terms, and
+service-contract invoices.
 
 Opportunity billing and site addresses are singleton child resources. They are addressed by
 their parent opportunity GUID plus the fixed `billing` or `site` route segment because the
 legacy address rows do not have public GUIDs. Address delete by legacy row ID remains
 deferred until a public address identity or explicit delete command is available.
+
+Notes use the note `CorrelationId` as the public note ID. UI ToDo tasks use `Tasks.UniqueId`
+as the public task ID and `Users.UniqueId` for assignees. These task routes are not the same
+as v2 `work-items` or project task-group/task planning APIs.
 
 Some request-body fields still follow the generated endpoint schema for the existing manager
 contract. When a field is a public resource identity in v2, it is represented as a GUID. When
@@ -175,6 +186,109 @@ Use these endpoints as supporting catalogs for quote/project item creation, purc
 estimates, and UI setup selectors. Catalog setup writes, generic FieldValue patch paths,
 inventory writes, and long-tail tenant lookup-table administration remain separate parity
 targets until each workflow has an explicit v2 command contract.
+
+### Create and update catalog products
+
+```http
+POST /api/v2/catalog/products
+POST /api/v2/catalog/products/from-library
+PUT /api/v2/catalog/products/{id}
+PUT /api/v2/catalog/products/prices
+PUT /api/v2/catalog/products/barcodes
+PUT /api/v2/catalog/products/statuses
+```
+
+These routes cover catalog product write paths without exposing arbitrary `FieldValue`
+patching. Custom product create and product update accept typed product fields and resolve
+brand, category, supplier, and manufacturer references internally. Add-from-library accepts
+a library product DTIN and optional supplier DTIN, then returns the tenant product public
+GUID.
+
+Bulk price, barcode, and status commands use public product GUIDs and delegate to the
+existing product service:
+
+```json
+[
+  {
+    "id": "88f782df-f23a-4c2f-92cd-771d2b2996c1",
+    "unitPrice": 499,
+    "unitCost": 300,
+    "msrp": 549
+  }
+]
+```
+
+Category, supplier, setup, and inventory writes remain deferred until those tenant-local
+rows have public identity or an approved natural-key command contract.
+
+### Manage notes
+
+```http
+GET /api/v2/clients/{clientId}/notes
+POST /api/v2/clients/{clientId}/notes
+GET /api/v2/clients/{clientId}/notes/{noteId}
+POST /api/v2/clients/{clientId}/notes/{noteId}/pin
+POST /api/v2/clients/{clientId}/notes/{noteId}/unpin
+
+GET /api/v2/opportunities/{opportunityId}/notes
+POST /api/v2/opportunities/{opportunityId}/notes
+GET /api/v2/opportunities/{opportunityId}/notes/{noteId}
+POST /api/v2/opportunities/{opportunityId}/notes/{noteId}/pin
+POST /api/v2/opportunities/{opportunityId}/notes/{noteId}/unpin
+
+GET /api/v2/projects/{projectId}/notes
+POST /api/v2/projects/{projectId}/notes
+GET /api/v2/projects/{projectId}/notes/{noteId}
+POST /api/v2/projects/{projectId}/notes/{noteId}/pin
+POST /api/v2/projects/{projectId}/notes/{noteId}/unpin
+```
+
+Note routes are scoped by the owning parent resource. The policies follow that parent:
+client notes use `Clients:Read`/`Clients:Write`, opportunity notes use
+`Opportunities:Read`/`Opportunities:Write`, and project notes use
+`Projects:Read`/`Projects:Write`.
+
+List routes support `page`, `pageSize`, and `pinned`. Create accepts note text and returns
+the public note detail. Pin and unpin are explicit commands so clients do not need to submit
+legacy note row IDs or internal pinned-note state.
+
+### Manage UI ToDo tasks
+
+```http
+GET /api/v2/clients/{clientId}/tasks
+POST /api/v2/clients/{clientId}/tasks
+GET /api/v2/opportunities/{opportunityId}/tasks
+POST /api/v2/opportunities/{opportunityId}/tasks
+GET /api/v2/projects/{projectId}/tasks
+POST /api/v2/projects/{projectId}/tasks
+GET /api/v2/tasks/{taskId}
+PUT /api/v2/tasks/{taskId}
+POST /api/v2/tasks/{taskId}/complete
+```
+
+These routes expose the UI ToDo/Assignment task store. They are governed by `Tasks:Read`
+and `Tasks:Write` in the `crm` family. List routes support `statusId`, `search`, `sort`,
+`page`, and `pageSize`. Create and update accept name, description, priority, status, due
+date, reminder date, completion fields, and assignee `resourceIds` as user GUIDs.
+
+Example create request:
+
+```json
+{
+  "name": "Confirm rack location",
+  "description": "Call the client before finalizing the equipment list.",
+  "priorityId": 2,
+  "statusId": 1,
+  "dueDate": "2026-06-30T00:00:00Z",
+  "resourceIds": [
+    "1e1ef4c7-4f8c-4958-8a74-156a8be05ad5"
+  ]
+}
+```
+
+`POST /tasks/{taskId}/complete` marks a task complete and can accept an explicit
+`completedDate`. This slice does not add delete, attachment upload, notifications, quote
+task, location task, system task, or first-class checklist write endpoints.
 
 ### Upload a file
 
