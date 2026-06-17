@@ -33,14 +33,14 @@ raw HTTP, every step also shows the equivalent `curl` command.
     browser, enter the code, and complete the Entra External ID sign-in flow.
 
     ```bash
-    dtcloud auth login
+    dtcloud --profile prod auth login
     ```
 
     Once authenticated, the CLI caches your MSAL token at `~/.dtcloud/token.json`
     (permissions `0600`). You can verify the token is valid at any time:
 
     ```bash
-    dtcloud auth status --output yaml
+    dtcloud --profile prod auth status --output yaml
     ```
 
     See [Authentication](/getting-started/authentication) for a full explanation of the
@@ -52,8 +52,8 @@ raw HTTP, every step also shows the equivalent `curl` command.
     one you want to use for subsequent commands:
 
     ```bash
-    dtcloud accounts list
-    dtcloud accounts use 12345
+    dtcloud --profile prod accounts list
+    dtcloud --profile prod accounts use 12345
     ```
 
     All account-scoped requests send the selected account in the `X-DTools-AccountId`
@@ -72,14 +72,13 @@ raw HTTP, every step also shows the equivalent `curl` command.
 
     <CodeGroup>
       ```bash CLI
-      dtcloud me --output json
+      dtcloud --profile prod me --output json
       ```
 
       ```bash curl
       curl -s \
         -H "Authorization: Bearer <your_access_token>" \
-        https://dtcloudapi.d-tools.cloud/api/v2/me/accounts
-      # Base URL: verify this — https://dtcloudapi.d-tools.cloud is the production host
+        https://api.d-tools.cloud/api/v2/me/accounts
       ```
     </CodeGroup>
 
@@ -99,15 +98,14 @@ raw HTTP, every step also shows the equivalent `curl` command.
 
     <CodeGroup>
       ```bash CLI
-      dtcloud clients list --output json
+      dtcloud --profile prod clients list --output json
       ```
 
       ```bash curl
       curl -s \
         -H "Authorization: Bearer <your_access_token>" \
         -H "X-DTools-AccountId: 12345" \
-        "https://dtcloudapi.d-tools.cloud/api/v2/clients?pageSize=5"
-      # Base URL: verify this
+        "https://api.d-tools.cloud/api/v2/clients?pageSize=5"
       ```
     </CodeGroup>
 
@@ -115,7 +113,7 @@ raw HTTP, every step also shows the equivalent `curl` command.
     the current token from the CLI:
 
     ```bash
-    TOKEN="$(dtcloud auth token)"
+    TOKEN="$(dtcloud --profile prod auth token)"
     ```
 
     `auth token` uses silent acquisition only. It can refresh through the local MSAL cache,

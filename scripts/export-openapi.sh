@@ -15,7 +15,7 @@
 #   DOCS_TIER  public | <tier-name with api-reference/tiers/<tier>.txt allowlist>
 #
 # Server overrides are read by normalize-openapi.mjs:
-#   DOCS_PROD_SERVER, DOCS_DEV_SERVER  (both default to documented hosts; verify this)
+#   DOCS_PROD_SERVER, DOCS_DEV_SERVER  (prod defaults to the documented host; verify dev before relying on it)
 
 set -euo pipefail
 

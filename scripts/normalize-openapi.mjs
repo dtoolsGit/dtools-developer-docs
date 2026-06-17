@@ -18,7 +18,7 @@
 //
 // Usage: node normalize-openapi.mjs <input.json> <output.json>
 // Env:
-//   DOCS_PROD_SERVER  (default https://dtcloudapi.d-tools.cloud            — verify this)
+//   DOCS_PROD_SERVER  (default https://api.d-tools.cloud)
 //   DOCS_DEV_SERVER   (default https://dtoolsdevapi.azure-api.net          — verify this)
 //   DOCS_TIER         (default "public" => no filtering)
 
@@ -32,7 +32,7 @@ if (!inPath || !outPath) {
   process.exit(2);
 }
 
-const PROD_SERVER = process.env.DOCS_PROD_SERVER || "https://dtcloudapi.d-tools.cloud";
+const PROD_SERVER = process.env.DOCS_PROD_SERVER || "https://api.d-tools.cloud";
 const DEV_SERVER = process.env.DOCS_DEV_SERVER || "https://dtoolsdevapi.azure-api.net";
 const TIER = (process.env.DOCS_TIER || "public").trim();
 
@@ -40,7 +40,7 @@ const spec = JSON.parse(readFileSync(inPath, "utf8"));
 
 // 1) Servers — replace whatever shipped with documented, public hosts.
 spec.servers = [
-  { url: PROD_SERVER, description: "Production (verify this)" },
+  { url: PROD_SERVER, description: "Production" },
   { url: DEV_SERVER, description: "Development (verify this)" },
 ];
 

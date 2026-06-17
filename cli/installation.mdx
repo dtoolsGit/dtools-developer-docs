@@ -97,13 +97,25 @@ dtcloud profile set staging \
   --default
 ```
 
-If you already created `~/.dtcloud/config.yaml` before the dev URL was updated, reset it:
+The production profile is configured by default. Use it explicitly unless you have made
+it your default profile:
+
+```bash
+dtcloud --profile prod auth login
+dtcloud --profile prod accounts list
+```
+
+If you already created `~/.dtcloud/config.yaml` before a default profile was updated,
+reset it:
 
 ```bash
 dtcloud profile set dev --base-url https://dtoolsdevapi.azure-api.net/api/v2
+dtcloud profile set prod \
+  --base-url https://api.d-tools.cloud/api/v2 \
+  --authority https://fb1ad9bb-9bd2-45fe-a065-c8a0370c2913.ciamlogin.com/fb1ad9bb-9bd2-45fe-a065-c8a0370c2913 \
+  --client-id 6ccf1cdf-d7f7-4aa4-a292-16ac4c1d6504 \
+  --scope api://0d607d3e-ee5d-4992-a722-9f5be9c67a17/access_as_user
 ```
-
-_(verify this — confirm the current dev endpoint with the D-Tools team before use)_
 
 Use a profile for a single command without changing the default:
 
