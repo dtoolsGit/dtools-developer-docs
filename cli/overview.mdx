@@ -52,14 +52,15 @@ The config file is created on first use at:
 ```
 
 It holds named profiles. The default `dev` profile points to the v2 development API Management
-endpoint _(verify this)_:
+endpoint:
 
 ```text
 https://dtoolsdevapi.azure-api.net/api/v2
 ```
 
-Staging and production profiles are included as placeholders and can be updated when their
-final base URLs and public-client settings are available.
+Production is also configured with the production API host, Entra External ID authority,
+CLI public client, and delegated API scope. Staging remains a placeholder until its
+public-client settings are available.
 
 ## Profiles
 
@@ -83,10 +84,18 @@ dtcloud profile set staging \
   --default
 ```
 
+Use the production profile:
+
+```bash
+dtcloud --profile prod auth login
+dtcloud --profile prod accounts list
+```
+
 Use a profile for a single command:
 
 ```bash
 dtcloud --profile staging clients list
+dtcloud --profile prod clients list
 ```
 
 ## Account selection

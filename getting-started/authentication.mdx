@@ -15,7 +15,7 @@ The fastest path to a working token is the `dtcloud` CLI's built-in device-code 
 
 ```bash
 # Install the CLI first — see /cli/installation
-dtcloud auth login
+dtcloud --profile prod auth login
 ```
 
 The CLI:
@@ -32,14 +32,14 @@ declines them.
 Verify the token is valid at any time:
 
 ```bash
-dtcloud auth status --output yaml
+dtcloud --profile prod auth status --output yaml
 ```
 
 Print the current access token when you need to call the API with `curl` or paste a token
 into the API reference playground:
 
 ```bash
-dtcloud auth token
+dtcloud --profile prod auth token
 ```
 
 `auth token` uses silent acquisition only. It can refresh through the local MSAL cache, but
