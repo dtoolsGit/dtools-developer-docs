@@ -24,6 +24,7 @@ services. v2 now puts the same operations behind governed bearer-token APIs:
 - Install-status updates remain lifecycle commands, not generic field patches.
 - Catalog brand, category, supplier, setup, tax, pricing, and new-product reference reads use the existing CatalogApi v1 managers while omitting legacy row IDs.
 - Catalog product create, add-from-library, update, price, barcode, and status write commands use typed v2 DTOs over public product GUIDs.
+- Catalog package metadata, package composition, and item accessories use tenant-scoped catalog item GUIDs and atomic replacement commands for migration-safe writes.
 - Client, opportunity, and project notes use public parent GUIDs and public note IDs; pinned note commands preserve the existing note manager behavior.
 - UI ToDo/Assignment tasks for clients, opportunities, and projects use public task and assignee GUIDs and are separate from v2 work items and project task-group APIs.
 - GUID-backed file uploads, parent-scoped project/quote location and system uploads, project/service-call invoice uploads, project subscription uploads, proposal uploads, and file link/name/visibility/delete commands use the existing file manager after v2 entity resolution.
@@ -45,6 +46,8 @@ services. v2 now puts the same operations behind governed bearer-token APIs:
 | Read catalog reference data | `GET /api/v2/catalog/brands`, `/brands/new`, `/brands/{brandDtin}`, `/brands/{brandDtin}/suppliers`, `/brands/{brandDtin}/new-products`, `/categories`, `/categories/icons`, `/setup/structure`, `/tax-settings`, `/taxes`, `/pricing-options`, `/suppliers`, `/suppliers/dtins`, `/suppliers/{supplierDtin}`, `/suppliers/{supplierDtin}/exists`, `/suppliers/{supplierDtin}/new-products` | `Catalog:Read` |
 | Resolve catalog product DTINs | `POST /api/v2/catalog/products/resolve-dtins` | `Catalog:Read` |
 | Create or update catalog products | `POST /api/v2/catalog/products`, `POST /api/v2/catalog/products/from-library`, `PUT /api/v2/catalog/products/{id}`, `PUT /api/v2/catalog/products/prices`, `PUT /api/v2/catalog/products/barcodes`, `PUT /api/v2/catalog/products/statuses` | `Catalog:Write` |
+| Create or update catalog packages | `GET/POST /api/v2/catalog/packages`, `GET/PUT /api/v2/catalog/packages/{id}` | `Catalog:Read` / `Catalog:Write` |
+| Manage package composition and item accessories | `GET/PUT /api/v2/catalog/packages/{id}/items`, `GET/PUT /api/v2/catalog/items/{id}/accessories`, `POST /api/v2/catalog/items/{id}/accessories/reset-to-category-defaults` | `Catalog:Read` / `Catalog:Write` |
 | Manage parent-scoped notes | Client, opportunity, and project `GET/POST /notes`, `GET /notes/{noteId}`, `POST /notes/{noteId}/pin`, `POST /notes/{noteId}/unpin` | `Clients:*`, `Opportunities:*`, `Projects:*` |
 | Manage UI ToDo tasks | `GET/POST /api/v2/clients/{clientId}/tasks`, `GET/POST /api/v2/opportunities/{opportunityId}/tasks`, `GET/POST /api/v2/projects/{projectId}/tasks`, `GET/PUT /api/v2/tasks/{taskId}`, `POST /api/v2/tasks/{taskId}/complete` | `Tasks:Read` / `Tasks:Write` |
 | Upload a file to a supported entity | `POST /api/v2/files` | `Files:Write` |
@@ -220,6 +223,58 @@ existing product service:
 
 Category, supplier, setup, and inventory writes remain deferred until those tenant-local
 rows have public identity or an approved natural-key command contract.
+
+### Migrate packages and accessories
+
+```http
+GET /api/v2/catalog/packages
+POST /api/v2/catalog/packages
+GET /api/v2/catalog/packages/{id}
+PUT /api/v2/catalog/packages/{id}
+GET /api/v2/catalog/packages/{id}/items
+PUT /api/v2/catalog/packages/{id}/items
+GET /api/v2/catalog/items/{id}/accessories
+PUT /api/v2/catalog/items/{id}/accessories
+POST /api/v2/catalog/items/{id}/accessories/reset-to-category-defaults
+```
+
+Create the referenced products, allowances, labor items, and nested packages first. Then
+replace the package composition with public catalog item GUIDs:
+
+```json
+{
+  "items": [
+    {
+      "itemId": "88f782df-f23a-4c2f-92cd-771d2b2996c1",
+      "quantity": 2,
+      "laborTime": 1800,
+      "laborPrice": 75,
+      "isBillable": true
+    }
+  ]
+}
+```
+
+Accessories use the same public GUID model and add an inclusion option:
+
+```json
+{
+  "accessories": [
+    {
+      "itemId": "1144f44f-2665-405f-a6d8-e91eb715721f",
+      "quantity": 1,
+      "includeOption": "recommended",
+      "isBillable": true
+    }
+  ]
+}
+```
+
+Both `PUT` operations atomically replace the complete relationship. Submit an empty
+`items` or `accessories` collection to clear it. Duplicate item GUIDs, self-references,
+unsupported catalog item types, and nested-package cycles are rejected. The reset command
+rebuilds accessories from the item's category defaults. All writes support
+`Idempotency-Key`.
 
 ### Manage notes
 

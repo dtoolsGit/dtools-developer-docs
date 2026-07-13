@@ -12,6 +12,29 @@ without a selected account.
 
 See [Global flags](/cli/overview#global-flags) for flags available on every command.
 
+## Catalog migration
+
+| Command | Purpose |
+| --- | --- |
+| `dtcloud catalog packages list` | List tenant catalog packages. |
+| `dtcloud catalog packages get <package-id>` | Get package metadata by public GUID. |
+| `dtcloud catalog packages create --file <package.json>` | Create package metadata. |
+| `dtcloud catalog packages update <package-id> --file <package.json>` | Update package metadata. |
+| `dtcloud catalog packages items <package-id>` | List package composition. |
+| `dtcloud catalog packages replace-items <package-id> --file <items.json>` | Atomically replace package composition. |
+| `dtcloud catalog items accessories <item-id>` | List accessories attached to an item. |
+| `dtcloud catalog items replace-accessories <item-id> --file <accessories.json>` | Atomically replace item accessories. |
+| `dtcloud catalog items reset-accessories <item-id>` | Reset accessories to category defaults. |
+
+```bash
+dtcloud catalog packages create --file package.json
+dtcloud catalog packages replace-items <package-id> --file package-items.json
+dtcloud catalog items replace-accessories <item-id> --file accessories.json
+```
+
+Package and accessory payloads use public catalog item GUIDs. Empty replacement collections
+clear the relationship. Replay-safe writes use the global `--idempotency-key` flag.
+
 ## Auth, profiles, and context
 
 | Command | Purpose |
