@@ -28,7 +28,7 @@ services. v2 now puts the same operations behind governed bearer-token APIs:
 - UI ToDo/Assignment tasks for clients, opportunities, and projects use public task and assignee GUIDs and are separate from v2 work items and project task-group APIs.
 - GUID-backed file uploads, parent-scoped project/quote location and system uploads, project/service-call invoice uploads, project subscription uploads, proposal uploads, and file link/name/visibility/delete commands use the existing file manager after v2 entity resolution.
 - Catalog item images and tenant company logo commands use the existing upload/company managers without accepting internal item or account IDs.
-- Purchase-order totals, status summaries, estimates, shipment tracking URLs, create, status, archive, delete, send/email, ADI direct-order, Amazon direct-order, and catalog-cost application actions use the existing purchase-order workflow.
+- Purchase-order totals, status summaries, estimates, shipment tracking URLs and tracking-number updates, create, status, archive, delete, send/email, ADI direct-order, Amazon direct-order, and catalog-cost application actions use the existing purchase-order workflow.
 - Service-call address reads/writes and state transitions use the existing ServiceApi manager so tax, visit, payment, inventory, checklist, activity, and webhook side effects stay intact.
 - Service-contract aggregates, lifecycle commands, payment schedules, invoices, invoice email, and invoice file upload use the existing ServiceApi v1 paths.
 - Registration, anonymous payment-session, and recipient checkout flows stay deferred.
@@ -62,6 +62,7 @@ services. v2 now puts the same operations behind governed bearer-token APIs:
 | Mark project item rows installed | `PUT /api/v2/projects/{projectId}/items/install-status` | `Projects:Write` |
 | Read purchase-order dashboard data | `GET /api/v2/purchase-orders/totals`, `POST /api/v2/purchase-orders/state-summaries`, `POST /api/v2/purchase-orders/estimate`, `GET /api/v2/purchase-orders/{id}/shipment-tracking-url` | `PurchaseOrders:Read` |
 | Create purchase orders | `POST /api/v2/purchase-orders` | `PurchaseOrders:Write` |
+| Set or replace a shipment tracking number | `PUT /api/v2/purchase-orders/{id}/shipment-tracking` | `PurchaseOrders:Write` |
 | Update purchase-order status | `PUT /api/v2/purchase-orders/{id}/status`, `PUT /api/v2/purchase-orders/status` | `PurchaseOrders:Write` |
 | Archive or unarchive purchase orders | `PUT /api/v2/purchase-orders/{id}/archive`, `PUT /api/v2/purchase-orders/archive` | `PurchaseOrders:Write` |
 | Delete purchase orders | `DELETE /api/v2/purchase-orders/{id}`, `POST /api/v2/purchase-orders/delete` | `PurchaseOrders:Write` |

@@ -105,6 +105,19 @@ dtcloud --idempotency-key dtcloud-retry-quote-20260529 quotes duplicate <quote-i
 dtcloud --yes quotes delete <quote-id>
 ```
 
+## Procurement
+
+| Command | Purpose |
+| --- | --- |
+| `dtcloud purchase-orders shipment-tracking <id> --tracking-number <value>` | Set or replace a purchase order's shipment tracking number. |
+
+```bash
+dtcloud purchase-orders shipment-tracking <purchase-order-guid> \
+  --tracking-number "1Z999AA10123456784"
+```
+
+The value is trimmed and limited to 100 characters. Repeating the same value is safe.
+
 ## Projects and tasks
 
 | Command | Purpose |
