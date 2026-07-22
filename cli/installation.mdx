@@ -5,7 +5,7 @@ description: "Install the dtcloud demo preview on Windows, Linux, or macOS and v
 
 ## Demo preview download
 
-Version `0.2.0-preview.4` is hosted in the D-Tools demo Azure environment. It is
+Version `0.2.0-preview.5` is hosted in the D-Tools demo Azure environment. It is
 intended for evaluation against demo accounts and is not a stable customer release.
 
 <CodeGroup>
@@ -24,20 +24,17 @@ The Unix installer pins the demo release public key, verifies the RSA-PSS signed
 manifest and artifact SHA-256, installs under `~/.local/bin`, and writes a bound
 receipt under `~/.dtcloud/install-receipt.json`.
 
-<Warning>
-  The preview PowerShell installer verifies the artifact SHA-256 but does not yet
-  verify the RSA manifest signature. Use it only for demo evaluation. Signed MSI
-  and production PowerShell installation remain blocked from stable promotion.
-</Warning>
+Both installers pin the demo public key, verify the RSA-PSS signed payload, and
+select artifact URLs and hashes only from that verified payload.
 
 Direct downloads are also available:
 
-- [macOS Apple silicon](https://dtclouddemostorage.blob.core.windows.net/dtcloud-cli-preview/artifacts/0.2.0-preview.4/dtcloud_0.2.0-preview.4_darwin_arm64)
-- [macOS Intel](https://dtclouddemostorage.blob.core.windows.net/dtcloud-cli-preview/artifacts/0.2.0-preview.4/dtcloud_0.2.0-preview.4_darwin_amd64)
-- [Linux x64](https://dtclouddemostorage.blob.core.windows.net/dtcloud-cli-preview/artifacts/0.2.0-preview.4/dtcloud_0.2.0-preview.4_linux_amd64)
-- [Linux ARM64](https://dtclouddemostorage.blob.core.windows.net/dtcloud-cli-preview/artifacts/0.2.0-preview.4/dtcloud_0.2.0-preview.4_linux_arm64)
-- [Windows x64](https://dtclouddemostorage.blob.core.windows.net/dtcloud-cli-preview/artifacts/0.2.0-preview.4/dtcloud_0.2.0-preview.4_windows_amd64.exe)
-- [Windows ARM64](https://dtclouddemostorage.blob.core.windows.net/dtcloud-cli-preview/artifacts/0.2.0-preview.4/dtcloud_0.2.0-preview.4_windows_arm64.exe)
+- [macOS Apple silicon](https://dtclouddemostorage.blob.core.windows.net/dtcloud-cli-preview/artifacts/0.2.0-preview.5/dtcloud_0.2.0-preview.5_darwin_arm64)
+- [macOS Intel](https://dtclouddemostorage.blob.core.windows.net/dtcloud-cli-preview/artifacts/0.2.0-preview.5/dtcloud_0.2.0-preview.5_darwin_amd64)
+- [Linux x64](https://dtclouddemostorage.blob.core.windows.net/dtcloud-cli-preview/artifacts/0.2.0-preview.5/dtcloud_0.2.0-preview.5_linux_amd64)
+- [Linux ARM64](https://dtclouddemostorage.blob.core.windows.net/dtcloud-cli-preview/artifacts/0.2.0-preview.5/dtcloud_0.2.0-preview.5_linux_arm64)
+- [Windows x64](https://dtclouddemostorage.blob.core.windows.net/dtcloud-cli-preview/artifacts/0.2.0-preview.5/dtcloud_0.2.0-preview.5_windows_amd64.exe)
+- [Windows ARM64](https://dtclouddemostorage.blob.core.windows.net/dtcloud-cli-preview/artifacts/0.2.0-preview.5/dtcloud_0.2.0-preview.5_windows_arm64.exe)
 
 Set the preview release origin before checking for updates or installing Agent Packs:
 
