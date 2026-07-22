@@ -1,0 +1,69 @@
+---
+title: "Governed workflows"
+description: "Run resumable, plan-approved D-Tools Cloud operations without duplicate or unverified writes."
+---
+
+Governed workflows bridge agent deliberation and authenticated CLI mutations. Runtime
+state is stored under `.dtcloud/workflows/<run-id>` so another terminal or agent can
+continue safely with `status` and `next`.
+
+## Install the Agent Pack
+
+```bash
+export DTCLOUD_RELEASE_BASE_URL=https://dtclouddemostorage.blob.core.windows.net/dtcloud-cli-preview/api/releases
+dtcloud agent-pack install codex --channel preview --workspace . --json
+dtcloud agent-pack doctor --workspace . --json
+```
+
+Adapters are available for `codex`, `claude`, `cursor`, `copilot`, and `generic`. Use
+`all` to install every adapter. Existing root instruction files are preserved and the
+pack candidate is staged for review.
+
+## Opportunity, quote, and plan workflow
+
+```bash
+dtcloud workflow assess \
+  --kind opportunity-quote-plan-create \
+  --goal "Create an opportunity, quote, and plan from these requirements" \
+  --json
+
+dtcloud workflow start \
+  --kind opportunity-quote-plan-create \
+  --goal "Create an opportunity, quote, and plan from these requirements" \
+  --workspace . \
+  --json
+
+dtcloud workflow next --workspace . --json
+```
+
+The first agent action prepares schema-valid `inputs/request.json`. Continue by running
+the exact action returned by `workflow next`.
+
+```bash
+dtcloud workflow plan --workspace . --out plan.json --json
+dtcloud workflow approve --workspace . \
+  --plan plan.json \
+  --plan-hash <hash-from-plan> \
+  --note "Approved for demo account" \
+  --json
+dtcloud workflow apply --workspace . --plan plan.json --approval approval.json --json
+dtcloud workflow prove --workspace . --json
+```
+
+<Warning>
+  Approval is invalid if the plan changes, expires, targets another account, or contains
+  a different action count. Do not edit an approved plan.
+</Warning>
+
+If a request times out after a write may have committed, the runtime records an ambiguous
+receipt and stops. Inspect remote readback before retrying. Successfully created records
+are retained; the workflow never deletes them automatically to conceal a partial apply.
+
+Completion requires:
+
+```json
+{
+  "status": "readback_verified",
+  "readbackVerified": true
+}
+```

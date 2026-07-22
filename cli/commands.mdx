@@ -12,6 +12,37 @@ without a selected account.
 
 See [Global flags](/cli/overview#global-flags) for flags available on every command.
 
+## Distribution and Agent Packs
+
+| Command | Purpose |
+| --- | --- |
+| `dtcloud version --json` | Report build metadata, invoked binary, receipt binding, and Agent Pack status. |
+| `dtcloud update-check --channel preview --json` | Check CLI and Agent Pack compatibility, hashes, capabilities, and release commit. |
+| `dtcloud self update --channel preview --dry-run --json` | Resolve and verify an update without replacing the executable. |
+| `dtcloud self update --channel preview --json` | Apply a verified direct update with rollback. |
+| `dtcloud agent-pack install <adapter>` | Install Codex, Claude, Cursor, Copilot, or generic guidance. |
+| `dtcloud agent-pack update <adapter>` | Conservatively update managed Agent Pack files. |
+| `dtcloud agent-pack doctor --workspace . --json` | Verify lockfile, compatibility, managed-file integrity, and adapter completeness. |
+
+Agent Pack updates never silently overwrite user-modified files. The new candidate is
+staged under `.dtcloud/agent-pack-candidates` for review.
+
+## Governed workflows
+
+| Command | Purpose |
+| --- | --- |
+| `dtcloud workflow assess` | Classify a goal and identify the supported recipe. |
+| `dtcloud workflow start` | Create canonical workflow state in the workspace. |
+| `dtcloud workflow status` | Report the active run and its current state. |
+| `dtcloud workflow next` | Return the next typed CLI, agent, decision, approval, blocking, or completion action. |
+| `dtcloud workflow record-decision` | Append a material user or agent decision. |
+| `dtcloud workflow plan` | Build and hash the deterministic operation plan. |
+| `dtcloud workflow approve` | Bind approval to the exact plan hash, account, action count, and expiry. |
+| `dtcloud workflow apply` | Execute or resume approved steps with idempotency receipts and readback. |
+| `dtcloud workflow prove` | Verify receipts and required remote readback. |
+
+See [Governed workflows](/cli/governed-workflows) for the complete control loop.
+
 ## Auth, profiles, and context
 
 | Command | Purpose |

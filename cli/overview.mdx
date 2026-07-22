@@ -12,12 +12,20 @@ The command surface covers account administration, CRM, opportunities, quotes, p
 task management, files, events, webhooks, jobs, and AI agents. It is curated rather than a
 one-for-one wrapper of every API endpoint.
 
+The demo preview also provides independently versioned Agent Packs and governed,
+resumable workflows. The CLI owns canonical state, immutable plans, approvals,
+idempotency, receipts, and readback. An external agent performs deliberation but cannot
+bypass runtime policy or manufacture proof.
+
 <CardGroup cols={2}>
   <Card title="Install" icon="download" href="/cli/installation">
     Download a pre-built binary or build from source.
   </Card>
   <Card title="Command reference" icon="terminal" href="/cli/commands">
     Full index of commands, subcommands, and flags.
+  </Card>
+  <Card title="Governed workflows" icon="diagram-project" href="/cli/governed-workflows">
+    Run resumable multi-step operations with plan-bound approval and readback proof.
   </Card>
 </CardGroup>
 
@@ -127,6 +135,7 @@ These flags are available on every command:
 | `--profile <name>` | Select a profile from `~/.dtcloud/config.yaml`. |
 | `--account <id>` | Send an explicit `X-DTools-AccountId` for this command only. |
 | `--output table,json,yaml` | Render output as a compact table, JSON, or YAML. |
+| `--json` | Emit JSON as an alias for `--output json`. |
 | `--query <expr>` | Apply a JMESPath expression before rendering. |
 | `--page <n>` | Request a specific page for list commands. |
 | `--page-size <n>` | Request a specific page size for list commands. |

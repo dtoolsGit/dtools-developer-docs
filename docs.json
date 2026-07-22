@@ -66,7 +66,8 @@
             "pages": [
               "cli/overview",
               "cli/installation",
-              "cli/commands"
+              "cli/commands",
+              "cli/governed-workflows"
             ]
           }
         ]
