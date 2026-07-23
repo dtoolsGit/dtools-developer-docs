@@ -49,7 +49,7 @@ services. v2 now puts the same operations behind governed bearer-token APIs:
 | Create or update catalog packages | `GET/POST /api/v2/catalog/packages`, `GET/PUT /api/v2/catalog/packages/{id}` | `Catalog:Read` / `Catalog:Write` |
 | Manage package composition and item accessories | `GET/PUT /api/v2/catalog/packages/{id}/items`, `GET/PUT /api/v2/catalog/items/{id}/accessories`, `POST /api/v2/catalog/items/{id}/accessories/reset-to-category-defaults` | `Catalog:Read` / `Catalog:Write` |
 | Manage parent-scoped notes | Client, opportunity, and project `GET/POST /notes`, `GET /notes/{noteId}`, `POST /notes/{noteId}/pin`, `POST /notes/{noteId}/unpin` | `Clients:*`, `Opportunities:*`, `Projects:*` |
-| Manage UI ToDo tasks | `GET/POST /api/v2/clients/{clientId}/tasks`, `GET/POST /api/v2/opportunities/{opportunityId}/tasks`, `GET/POST /api/v2/projects/{projectId}/tasks`, `GET/PUT /api/v2/tasks/{taskId}`, `POST /api/v2/tasks/{taskId}/complete` | `Tasks:Read` / `Tasks:Write` |
+| Manage UI To-Dos | `GET/POST /api/v2/clients/{clientId}/todos`, `GET/POST /api/v2/opportunities/{opportunityId}/todos`, `GET/POST /api/v2/projects/{projectId}/todos`, `GET/PUT /api/v2/todos/{todoId}`, `POST /api/v2/todos/{todoId}/complete` | `Todos:Read` / `Todos:Write` |
 | Upload a file to a supported entity | `POST /api/v2/files` | `Files:Write` |
 | Upload catalog item image or manage company logo | `POST /api/v2/catalog/items/{itemId}/images`, `POST /api/v2/company/logo`, `DELETE /api/v2/company/logo` | `Files:Write` |
 | Upload a file to a project or quote location/system | `POST /api/v2/projects/{projectId}/locations/{locationId}/files`, `POST /api/v2/projects/{projectId}/systems/{systemId}/files`, `POST /api/v2/quotes/{quoteId}/locations/{locationId}/files`, `POST /api/v2/quotes/{quoteId}/systems/{systemId}/files` | `Files:Write` |
@@ -307,24 +307,33 @@ List routes support `page`, `pageSize`, and `pinned`. Create accepts note text a
 the public note detail. Pin and unpin are explicit commands so clients do not need to submit
 legacy note row IDs or internal pinned-note state.
 
-### Manage UI ToDo tasks
+### Manage UI To-Dos
 
 ```http
-GET /api/v2/clients/{clientId}/tasks
-POST /api/v2/clients/{clientId}/tasks
-GET /api/v2/opportunities/{opportunityId}/tasks
-POST /api/v2/opportunities/{opportunityId}/tasks
-GET /api/v2/projects/{projectId}/tasks
-POST /api/v2/projects/{projectId}/tasks
-GET /api/v2/tasks/{taskId}
-PUT /api/v2/tasks/{taskId}
-POST /api/v2/tasks/{taskId}/complete
+GET /api/v2/clients/{clientId}/todos
+POST /api/v2/clients/{clientId}/todos
+POST /api/v2/clients/{clientId}/todos/batch
+GET /api/v2/opportunities/{opportunityId}/todos
+POST /api/v2/opportunities/{opportunityId}/todos
+POST /api/v2/opportunities/{opportunityId}/todos/batch
+GET /api/v2/projects/{projectId}/todos
+POST /api/v2/projects/{projectId}/todos
+GET /api/v2/todos/{todoId}
+PUT /api/v2/todos/{todoId}
+POST /api/v2/todos/{todoId}/complete
 ```
 
-These routes expose the UI ToDo/Assignment task store. They are governed by `Tasks:Read`
-and `Tasks:Write` in the `crm` family. List routes support `statusId`, `search`, `sort`,
+These routes expose the UI To-Do/Assignment task store. They are governed by `Todos:Read`
+and `Todos:Write` in the `crm` family. List routes support `statusId`, `search`, `sort`,
 `page`, and `pageSize`. Create and update accept name, description, priority, status, due
-date, reminder date, completion fields, and assignee `resourceIds` as user GUIDs.
+date, reminder date, completion fields, and assignee `resourceIds` as user GUIDs. Client
+and opportunity batch routes accept a `todos` array, validate the full batch before
+writing, and return the created To-Dos.
+
+The original matching `/tasks` routes and `v2.tasks.*` operation IDs remain available as
+deprecated compatibility aliases. They use the same `Todos:*` authorization and `todos`
+release feature as the canonical routes. Legacy batch callers can continue to send the
+original `tasks` request member; new integrations should use `/todos` and `todos`.
 
 Example create request:
 
@@ -341,7 +350,7 @@ Example create request:
 }
 ```
 
-`POST /tasks/{taskId}/complete` marks a task complete and can accept an explicit
+`POST /todos/{todoId}/complete` marks a To-Do complete and can accept an explicit
 `completedDate`. This slice does not add delete, attachment upload, notifications, quote
 task, location task, system task, or first-class checklist write endpoints.
 

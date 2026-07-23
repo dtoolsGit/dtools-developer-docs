@@ -165,6 +165,10 @@ dtcloud --yes quotes delete <quote-id>
 | --- | --- |
 | `dtcloud projects list` | List projects. |
 | `dtcloud projects get <id>` | Get a project by public ID. |
+| `dtcloud api call v2.todos.clients.batch.create --path clientId=<client-id> --body-file todos.json` | Create client To-Dos in bulk. |
+| `dtcloud api call v2.todos.opportunities.batch.create --path opportunityId=<opportunity-id> --body-file todos.json` | Create opportunity To-Dos in bulk. |
+| `dtcloud api call v2.tasks.clients.list --path clientId=<client-id>` | Call the deprecated client task-route alias. |
+| `dtcloud api call v2.tasks.clients.batch.create --path clientId=<client-id> --body-file tasks.json` | Call the deprecated client task batch alias with the original `tasks` request member. |
 | `dtcloud projects items <id>` | List project items. |
 | `dtcloud project-task-groups list <project-id>` | List project task groups. |
 | `dtcloud project-task-groups create <project-id>` | Create a project task group. |
