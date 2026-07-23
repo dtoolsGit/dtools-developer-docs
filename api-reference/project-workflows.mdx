@@ -335,6 +335,11 @@ Client and opportunity batch routes accept a `todos` array of the same create pa
 validate the full batch before writing, and return a synchronous batch result with the
 created To-Do IDs.
 
+The original matching `/tasks` routes and `v2.tasks.*` operation IDs remain available as
+deprecated compatibility aliases. They use the same `Todos:*` authorization and `todos`
+release feature as the canonical routes. Legacy batch callers can continue to send the
+original `tasks` request member; new integrations should use `/todos` and `todos`.
+
 Example create request:
 
 ```json

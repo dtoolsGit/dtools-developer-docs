@@ -109,6 +109,11 @@ function buildMetaLine(op) {
   if (bool(op["x-dtools-idempotent"]) !== null) parts.push(`**Idempotent:** ${bool(op["x-dtools-idempotent"])}`);
   if (bool(op["x-dtools-async-job"]) !== null) parts.push(`**Async job:** ${bool(op["x-dtools-async-job"])}`);
   if (op["x-dtools-workload-class"]) parts.push(`**Workload:** \`${op["x-dtools-workload-class"]}\``);
+  if (op["x-dtools-page-size-max"]) {
+    const profile = op["x-dtools-pagination-profile"] || "Standard";
+    const defaultSize = op["x-dtools-page-size-default"] ? `, default ${op["x-dtools-page-size-default"]}` : "";
+    parts.push(`**Pagination:** max page size ${op["x-dtools-page-size-max"]}${defaultSize} (${profile})`);
+  }
   return parts.length ? parts.join(" · ") : null;
 }
 // Idempotency: skip if our badge line is already present (detected by distinctive labels),

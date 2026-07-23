@@ -150,6 +150,8 @@ dtcloud contacts list --companies "Acme"
 | `dtcloud api call v2.quotes.systems.create --path id=<id> --body-file <body.json>` | Create or reuse a quote system by name. |
 | `dtcloud api call v2.todos.clients.batch.create --path clientId=<client-id> --body-file todos.json` | Create client To-Dos in bulk. |
 | `dtcloud api call v2.todos.opportunities.batch.create --path opportunityId=<opportunity-id> --body-file todos.json` | Create opportunity To-Dos in bulk. |
+| `dtcloud api call v2.tasks.clients.list --path clientId=<client-id>` | Call the deprecated client task-route alias. |
+| `dtcloud api call v2.tasks.clients.batch.create --path clientId=<client-id> --body-file tasks.json` | Call the deprecated client task batch alias with the original `tasks` request member. |
 
 ```bash
 dtcloud opportunities list --stages "Proposal"
