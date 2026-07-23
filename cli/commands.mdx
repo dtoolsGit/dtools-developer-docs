@@ -105,8 +105,13 @@ dtcloud --account 12345 projects list
 | `dtcloud clients get <id>` | Get a client by public ID. |
 | `dtcloud clients create` | Create a client from flags or `--file`. |
 | `dtcloud clients update <id>` | Update a client from flags or `--file`. |
+| `dtcloud api call v2.crm.clients.subaccounts.list --path parentId=<client-id>` | List client sub-accounts for a parent client. |
+| `dtcloud api call v2.crm.clients.subaccounts.link --path parentId=<client-id> --body-file subaccounts.json` | Link clients as sub-accounts. |
+| `dtcloud api call v2.crm.clients.subaccounts.unlink --path parentId=<client-id> --path clientId=<child-client-id>` | Unlink a sub-account from its parent. |
+| `dtcloud api call v2.crm.clients.contacts.associate --path clientId=<client-id> --path contactId=<contact-guid> --body-json '{"isPrimary":true}'` | Associate an existing contact with a client. |
+| `dtcloud api call v2.crm.clients.contacts.disassociate --path clientId=<client-id> --path contactId=<contact-guid>` | Remove a contact association from a client. |
 | `dtcloud contacts list` | List CRM contacts. |
-| `dtcloud contacts get <id>` | Get a contact by internal ID. |
+| `dtcloud contacts get <id>` | Get a contact by public ID. |
 
 **Client write flags:**
 
@@ -140,7 +145,11 @@ dtcloud contacts list --companies "Acme"
 | `dtcloud quotes restore <id>` | Restore a deleted quote. |
 | `dtcloud quotes delete <id>` | Soft-delete a quote. Requires confirmation unless `--yes`. |
 | `dtcloud quotes sow get <id>` | Get quote scope-of-work HTML. |
-| `dtcloud quotes sow set <id> --file <html>` | Save quote scope-of-work HTML from a file. |
+| `dtcloud quotes sow set <id> --file <html>` | Save quote scope-of-work HTML from a file using the `{ "scopeOfWork": "..." }` body contract. |
+| `dtcloud api call v2.quotes.locations.create --path id=<id> --body-file <body.json>` | Create or reuse a quote location by name. |
+| `dtcloud api call v2.quotes.systems.create --path id=<id> --body-file <body.json>` | Create or reuse a quote system by name. |
+| `dtcloud api call v2.todos.clients.batch.create --path clientId=<client-id> --body-file todos.json` | Create client To-Dos in bulk. |
+| `dtcloud api call v2.todos.opportunities.batch.create --path opportunityId=<opportunity-id> --body-file todos.json` | Create opportunity To-Dos in bulk. |
 
 ```bash
 dtcloud opportunities list --stages "Proposal"
@@ -165,6 +174,9 @@ dtcloud --yes quotes delete <quote-id>
 | --- | --- |
 | `dtcloud projects list` | List projects. |
 | `dtcloud projects get <id>` | Get a project by public ID. |
+| `dtcloud api call v2.projects.stage.update --path id=<id> --body-file <body.json>` | Set a project stage/state with the generic API caller. |
+| `dtcloud api call v2.projects.locations.create --path id=<id> --body-file <body.json>` | Create or reuse a project location by name. |
+| `dtcloud api call v2.projects.systems.create --path id=<id> --body-file <body.json>` | Create or reuse a project system by name. |
 | `dtcloud projects items <id>` | List project items. |
 | `dtcloud project-task-groups list <project-id>` | List project task groups. |
 | `dtcloud project-task-groups create <project-id>` | Create a project task group. |
