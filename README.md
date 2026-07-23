@@ -4,6 +4,21 @@ Public developer documentation for the D-Tools Cloud **v2 platform** — REST AP
 and CLI — published with [Mintlify](https://mintlify.com). See
 [ADR-0005](../docs/adr/0005-developer-docs-platform.md) for the decision record.
 
+## Canonical repository
+
+The canonical source for these Mintlify docs is
+[`dtoolsGit/dtools-developer-docs`](https://github.com/dtoolsGit/dtools-developer-docs).
+Create all new documentation branches, commits, pull requests, and Mintlify integrations
+against that repository.
+
+The former `abdul-siq/dtools-developer-docs` repository is historical and read-only. Do not use
+it for new documentation or deployment work. Before pushing, verify:
+
+```bash
+git remote get-url origin
+# git@github.com:dtoolsGit/dtools-developer-docs.git
+```
+
 ## Layout
 
 ```
